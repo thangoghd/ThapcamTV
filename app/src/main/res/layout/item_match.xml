@@ -1,7 +1,145 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-             android:orientation="vertical"
-             android:layout_width="match_parent"
-             android:layout_height="match_parent">
+    android:layout_width="300dp"
+    android:layout_height="180dp"
+    android:orientation="vertical"
+    android:focusable="true"
+    android:focusableInTouchMode="true"
+    android:padding="10dp"
+    android:background="@drawable/match_background_normal">
 
+    <!-- Header: Sport icon and tournament name -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="24dp"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:layout_marginBottom="8dp">
+
+        <TextView
+            android:id="@+id/tournamentName"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:textSize="12sp"
+            android:textColor="@android:color/white"
+            android:maxLines="1"
+            android:ellipsize="end"/>
+    </LinearLayout>
+
+    <!-- Main match info -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:orientation="horizontal">
+
+        <!-- Home team -->
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:gravity="center">
+
+            <ImageView
+                android:id="@+id/homeLogo"
+                android:layout_width="60dp"
+                android:layout_height="60dp"
+                android:layout_marginBottom="4dp"/>
+
+            <TextView
+                android:id="@+id/homeName"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textSize="12sp"
+                android:textColor="@android:color/white"
+                android:gravity="center"
+                android:maxLines="2"
+                android:ellipsize="end"/>
+        </LinearLayout>
+
+        <!-- Match status and score -->
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:orientation="vertical"
+            android:gravity="center"
+            android:layout_marginHorizontal="8dp">
+
+            <TextView
+                android:id="@+id/matchScore"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                android:textColor="@android:color/white"/>
+
+            <TextView
+                android:id="@+id/matchStatus"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textSize="12sp"
+                android:textColor="@android:color/white"/>
+
+            <TextView
+                android:id="@+id/matchDateTime"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textSize="12sp"
+                android:textColor="@android:color/white"/>
+        </LinearLayout>
+
+        <!-- Away team -->
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:gravity="center">
+
+            <ImageView
+                android:id="@+id/awayLogo"
+                android:layout_width="60dp"
+                android:layout_height="60dp"
+                android:layout_marginBottom="4dp"/>
+
+            <TextView
+                android:id="@+id/awayName"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textSize="12sp"
+                android:textColor="@android:color/white"
+                android:gravity="center"
+                android:maxLines="2"
+                android:ellipsize="end"/>
+        </LinearLayout>
+    </LinearLayout>
+
+
+    <!-- Commentator info -->
+    <LinearLayout
+        android:id="@+id/commentatorLayout"
+        android:layout_width="wrap_content"
+        android:layout_height="24dp"
+        android:layout_marginTop="8dp"
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
+
+        <ImageView
+            android:id="@+id/commentatorAvatar"
+            android:layout_width="15dp"
+            android:layout_height="15dp"
+            android:layout_marginEnd="4dp"
+            android:scaleType="fitXY" />
+
+        <TextView
+            android:id="@+id/commentatorName"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:ellipsize="end"
+            android:maxLines="1"
+            android:textColor="@android:color/white"
+            android:textSize="10sp" />
+    </LinearLayout>
 </LinearLayout>

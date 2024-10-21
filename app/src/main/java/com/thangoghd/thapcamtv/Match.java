@@ -1,4 +1,4 @@
-package com.thangoghd.thapcamtv.model;
+package com.thangoghd.thapcamtv;
 
 import java.util.List;
 

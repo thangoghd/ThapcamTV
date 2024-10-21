@@ -1,7 +1,4 @@
-package com.thangoghd.thapcamtv.api;
-
-import com.thangoghd.thapcamtv.RetrofitClient;
-import com.thangoghd.thapcamtv.SportApi;
+package com.thangoghd.thapcamtv;
 
 public class ApiManager {
     private static SportApi sportApi = null;

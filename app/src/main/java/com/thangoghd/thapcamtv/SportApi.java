@@ -1,5 +1,4 @@
-package com.thangoghd.thapcamtv.api;
-import com.thangoghd.thapcamtv.model.Match;
+package com.thangoghd.thapcamtv;
 
 import retrofit2.Call;
 import retrofit2.http.GET;

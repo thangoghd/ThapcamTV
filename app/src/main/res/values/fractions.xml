@@ -1,3 +1,4 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <fraction name="lb_browse_header_unselect_alpha">50%</fraction>
 </resources>

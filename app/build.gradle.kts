@@ -34,4 +34,12 @@ dependencies {
 
     implementation(libs.androidx.leanback)
     implementation(libs.glide)
+    // https://mvnrepository.com/artifact/com.squareup.retrofit2/retrofit
+    implementation("com.squareup.retrofit2:retrofit:2.11.0")
+    // https://mvnrepository.com/artifact/com.squareup.retrofit2/converter-gson
+    implementation("com.squareup.retrofit2:converter-gson:2.11.0")
+    // https://mvnrepository.com/artifact/com.squareup.okhttp3/logging-interceptor
+    implementation("com.squareup.okhttp3:logging-interceptor:5.0.0-alpha.14")
+    // AndroidX Leanback for TV UI components
+    implementation ("androidx.leanback:leanback:1.0.0")
 }
