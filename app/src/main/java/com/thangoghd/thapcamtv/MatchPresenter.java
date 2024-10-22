@@ -12,7 +12,6 @@ import androidx.core.content.ContextCompat;
 import androidx.leanback.widget.Presenter;
 
 import com.bumptech.glide.Glide;
-import com.thangoghd.thapcamtv.Commentator;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -92,16 +91,32 @@ public class MatchPresenter extends Presenter {
         } else {
             scoreView.setText("vs");
         }
-    
+
         // Set match status
         TextView statusView = view.findViewById(R.id.matchStatus);
+        LinearLayout liveLayout = view.findViewById(R.id.liveLayout);
+
+        if(match.getLive() == true)
+        {
+            liveLayout.setVisibility(View.VISIBLE);
+        }
+        else{
+            liveLayout.setVisibility(View.GONE);
+        }
+
         if ("live".equalsIgnoreCase(match.getMatch_status())) {
             statusView.setText("Đang diễn ra");
             statusView.setTextColor(ContextCompat.getColor(view.getContext(), android.R.color.holo_green_light));
+
         } else if ("finished".equalsIgnoreCase(match.getMatch_status())) {
             statusView.setText("Kết thúc");
             statusView.setTextColor(ContextCompat.getColor(view.getContext(), android.R.color.holo_red_light));
-        } else {
+
+        } else if ("canceled".equalsIgnoreCase(match.getMatch_status())) {
+            statusView.setText("Bị huỷ");
+            statusView.setTextColor(ContextCompat.getColor(view.getContext(), android.R.color.holo_red_light));
+        }
+        else {
             statusView.setText("Sắp diễn ra");
             statusView.setTextColor(ContextCompat.getColor(view.getContext(), android.R.color.holo_orange_light));
         }
@@ -120,7 +135,7 @@ public class MatchPresenter extends Presenter {
             for (Commentator commentator : commentators) {
                 View commentatorView = LayoutInflater.from(view.getContext()).inflate(R.layout.item_commentator, commentatorLayout, false);
 
-                ImageView avatarView = commentatorView.findViewById(R.id.commentatorAvatar);
+                ImageView avatarView = commentatorView.findViewById(R.id.commentatorIcon);
                 TextView nameView = commentatorView.findViewById(R.id.commentatorName);
 
 //                if (commentator.getAvatar() != null && !commentator.getAvatar().isEmpty()) {

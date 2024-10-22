@@ -15,6 +15,7 @@ public class Match {
     private String sport_type;
     private String match_status;
     private List<Commentator> commentators;
+    private boolean is_live;
 
     // Getters and setters
     public String getId() {
@@ -112,6 +113,10 @@ public class Match {
     public void setCommentators(List<Commentator> commentators) {
         this.commentators = commentators;
     }
+
+    public boolean getLive(){return is_live;}
+
+
 
 }
 
@@ -219,3 +224,4 @@ class Commentator {
         this.url = url;
     }
 }
+

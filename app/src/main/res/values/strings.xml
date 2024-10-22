@@ -16,4 +16,9 @@
     <!-- Error messages -->
     <string name="error_fragment_message">An error occurred</string>
     <string name="dismiss_error">Dismiss</string>
+
+    <!-- Live span and reminder text-->
+    <string name="live_text">Trực tiếp</string>
+    <string name="reminder_text">Hẹn giờ</string>
+
 </resources>
