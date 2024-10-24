@@ -41,14 +41,14 @@ public class MatchPresenter extends Presenter {
         if (match.getTournament() != null) {
             tournamentNameView.setText(match.getTournament().getName());
         } else {
-            tournamentNameView.setText("Unknown Tournament");
+            tournamentNameView.setText(view.getContext().getString(R.string.unknown_tournament));
         }
     
         // Set home team info
         TextView homeNameView = view.findViewById(R.id.homeName);
         ImageView homeLogoView = view.findViewById(R.id.homeLogo);
         if (match.getHome() != null) {
-            homeNameView.setText(truncateText(match.getHome().getName(), 20));
+            homeNameView.setText(truncateText(match.getHome().getName()));
             if (match.getHome().getLogo() != null) {
                 Glide.with(view.getContext())
                         .load(match.getHome().getLogo())
@@ -57,7 +57,7 @@ public class MatchPresenter extends Presenter {
                 homeLogoView.setImageResource(R.drawable.default_team_logo);
             }
         } else {
-            homeNameView.setText("Unknown Team");
+            homeNameView.setText(view.getContext().getString(R.string.unknown_team));
             homeLogoView.setImageResource(R.drawable.default_team_logo);
         }
     
@@ -65,7 +65,7 @@ public class MatchPresenter extends Presenter {
         TextView awayNameView = view.findViewById(R.id.awayName);
         ImageView awayLogoView = view.findViewById(R.id.awayLogo);
         if (match.getAway() != null) {
-            awayNameView.setText(truncateText(match.getAway().getName(), 20));
+            awayNameView.setText(truncateText(match.getAway().getName()));
             if (match.getAway().getLogo() != null) {
                 Glide.with(view.getContext())
                         .load(match.getAway().getLogo())
@@ -74,7 +74,7 @@ public class MatchPresenter extends Presenter {
                 awayLogoView.setImageResource(R.drawable.default_team_logo);
             }
         } else {
-            awayNameView.setText(truncateText(match.getHome().getName(), 20));
+            awayNameView.setText(truncateText(match.getHome().getName()));
             if (match.getHome().getLogo() != null) {
                 Glide.with(view.getContext())
                         .load(match.getHome().getLogo())
@@ -83,20 +83,21 @@ public class MatchPresenter extends Presenter {
                 awayLogoView.setImageResource(R.drawable.default_team_logo);
             }
         }
-    
+
         // Set match score
         TextView scoreView = view.findViewById(R.id.matchScore);
         if (match.getScores() != null) {
-            scoreView.setText(match.getScores().getHome() + " - " + match.getScores().getAway());
+            String score = view.getContext().getString(R.string.match_score, match.getScores().getHome(), match.getScores().getAway());
+            scoreView.setText(score);
         } else {
-            scoreView.setText("vs");
+            scoreView.setText(view.getContext().getString(R.string.versus));
         }
 
-        // Set match status
+        // Set live status
         TextView statusView = view.findViewById(R.id.matchStatus);
         LinearLayout liveLayout = view.findViewById(R.id.liveLayout);
 
-        if(match.getLive() == true)
+        if(match.getLive())
         {
             liveLayout.setVisibility(View.VISIBLE);
         }
@@ -104,20 +105,28 @@ public class MatchPresenter extends Presenter {
             liveLayout.setVisibility(View.GONE);
         }
 
+        // Set match status
         if ("live".equalsIgnoreCase(match.getMatch_status())) {
-            statusView.setText("Đang diễn ra");
-            statusView.setTextColor(ContextCompat.getColor(view.getContext(), android.R.color.holo_green_light));
+            if(match.getTimeInMatch() != null)
+            {
+                statusView.setText(match.getTimeInMatch());
+                statusView.setTextColor(ContextCompat.getColor(view.getContext(), android.R.color.holo_green_light));
+            }
+            else {
+                statusView.setText(view.getContext().getString(R.string.match_live));
+                statusView.setTextColor(ContextCompat.getColor(view.getContext(), android.R.color.holo_green_light));
+            }
 
         } else if ("finished".equalsIgnoreCase(match.getMatch_status())) {
-            statusView.setText("Kết thúc");
+            statusView.setText(view.getContext().getString(R.string.match_finished));
             statusView.setTextColor(ContextCompat.getColor(view.getContext(), android.R.color.holo_red_light));
 
         } else if ("canceled".equalsIgnoreCase(match.getMatch_status())) {
-            statusView.setText("Bị huỷ");
+            statusView.setText(view.getContext().getString(R.string.match_canceled));
             statusView.setTextColor(ContextCompat.getColor(view.getContext(), android.R.color.holo_red_light));
         }
         else {
-            statusView.setText("Sắp diễn ra");
+            statusView.setText(view.getContext().getString(R.string.match_upcoming));
             statusView.setTextColor(ContextCompat.getColor(view.getContext(), android.R.color.holo_orange_light));
         }
     
@@ -165,12 +174,12 @@ public class MatchPresenter extends Presenter {
         });
     }
     
-    private String truncateText(String text, int maxLength) {
+    private String truncateText(String text) {
         if (text == null) {
             return "";
         }
-        if (text.length() > maxLength) {
-            return text.substring(0, maxLength - 3) + "...";
+        if (text.length() > 20) {
+            return text.substring(0, 20 - 3) + "...";
         }
         return text;
     }

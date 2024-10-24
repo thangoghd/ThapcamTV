@@ -1,4 +1,4 @@
-package com.thangoghd.thapcamtv;
+package com.thangoghd.thapcamtv.iconheader;
 
 import android.view.LayoutInflater;
 import android.view.View;
@@ -9,6 +9,8 @@ import android.widget.TextView;
 import androidx.leanback.widget.Presenter;
 import androidx.leanback.widget.Row;
 import androidx.leanback.widget.RowHeaderPresenter;
+
+import com.thangoghd.thapcamtv.R;
 
 public class IconHeaderItemPresenter extends RowHeaderPresenter {
     private float mUnselectedAlpha;

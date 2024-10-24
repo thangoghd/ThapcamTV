@@ -21,4 +21,14 @@
     <string name="live_text">Trực tiếp</string>
     <string name="reminder_text">Hẹn giờ</string>
 
+    <!--Match states-->
+    <string name="match_score">%1$d - %2$d</string>
+    <string name="versus">vs</string>
+    <string name="unknown_tournament">Không rõ tên giải đấu</string>
+    <string name="unknown_team">Không rõ tên đội</string>
+    <string name="match_live">Đang diễn ra</string>
+    <string name="match_finished">Kết thúc</string>
+    <string name="match_canceled">Bị huỷ</string>
+    <string name="match_upcoming">Sắp diễn ra</string>
+
 </resources>

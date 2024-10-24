@@ -5,7 +5,6 @@ import android.os.Bundle;
 import androidx.annotation.NonNull;
 import androidx.leanback.app.BrowseSupportFragment;
 import androidx.leanback.widget.ArrayObjectAdapter;
-import androidx.leanback.widget.HeaderItem;
 import androidx.leanback.widget.HorizontalGridView;
 import androidx.leanback.widget.ListRow;
 import androidx.leanback.widget.ListRowPresenter;
@@ -13,6 +12,9 @@ import androidx.leanback.widget.RowHeaderPresenter;
 import androidx.leanback.widget.RowPresenter;
 import androidx.lifecycle.ViewModel;
 import androidx.lifecycle.ViewModelProvider;
+
+import com.thangoghd.thapcamtv.iconheader.IconHeaderItem;
+import com.thangoghd.thapcamtv.iconheader.IconHeaderItemPresenterSelector;
 
 import java.util.List;
 import java.util.Map;
@@ -37,6 +39,7 @@ public class MainFragment extends BrowseSupportFragment {
 
         setupUIElements();
         loadRows();
+        setHeaderPresenterSelector(new IconHeaderItemPresenterSelector());
 
         viewModel.fetchMatches();
     }
@@ -49,25 +52,25 @@ public class MainFragment extends BrowseSupportFragment {
 
     private void loadRows() {
         ArrayObjectAdapter rowsAdapter = new ArrayObjectAdapter(new CustomListRowPresenter());
-    
+
         viewModel.getMatches().observe(getViewLifecycleOwner(), matchesBySport -> {
             rowsAdapter.clear();
-            int index = 0;
             for (Map.Entry<String, List<Match>> entry : matchesBySport.entrySet()) {
-                String sportType = entry.getKey();
+                String sportKey = entry.getKey();
                 List<Match> matches = entry.getValue();
-    
+
+                SportType sportType = SportType.fromKey(sportKey);
+                IconHeaderItem header = new IconHeaderItem(sportType.ordinal(), sportType.getVietnameseName(), sportType.getIconResourceId());
+
                 ArrayObjectAdapter listRowAdapter = new ArrayObjectAdapter(new MatchPresenter());
                 for (Match match : matches) {
                     listRowAdapter.add(match);
                 }
-    
-                HeaderItem header = new HeaderItem(sportType);
+
                 rowsAdapter.add(new ListRow(header, listRowAdapter));
-                index++;
             }
         });
-    
+
         setAdapter(rowsAdapter);
     }
 

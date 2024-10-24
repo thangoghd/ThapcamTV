@@ -7,6 +7,7 @@ import retrofit2.Response;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -45,53 +46,69 @@ public class SportRepository {
     }
 
     public Map<String, List<Match>> getMatchesBySportType(List<Match> matches) {
-        Map<String, List<Match>> groupedMatches = new LinkedHashMap<>(); // Use LinkedHashMap to maintain insertion order
-
-        // First, group matches by sport type
+        Map<String, List<Match>> groupedMatches = new LinkedHashMap<>();
         Map<String, List<Match>> tempGroupedMatches = new HashMap<>();
+    
+        // Group matches by sport type
         for (Match match : matches) {
-            if (!"finished".equalsIgnoreCase(match.getMatch_status())) { // Filter out finished matches
+            if (!"finished".equalsIgnoreCase(match.getMatch_status())) {
                 tempGroupedMatches.computeIfAbsent(match.getSport_type(), k -> new ArrayList<>()).add(match);
             }
         }
-
-        // Then, add sports in the priority order
+    
+        // Sort matches within each sport type
+        for (List<Match> sportMatches : tempGroupedMatches.values()) {
+            sportMatches.sort((m1, m2) -> {
+                int priority1 = m1.getTournament().getPriority();
+                int priority2 = m2.getTournament().getPriority();
+                
+                // Compare by priority groups
+                if (isTopTwoPriority(priority1, matches) != isTopTwoPriority(priority2, matches)) {
+                    return isTopTwoPriority(priority2, matches) ? 1 : -1;
+                }
+                
+                // Compare by live broadcast
+                if (m1.getLive() != m2.getLive()) {
+                    return m2.getLive() ? 1 : -1;
+                }
+                
+                // Compare by match status
+                if ("live".equalsIgnoreCase(m1.getMatch_status()) != "live".equalsIgnoreCase(m2.getMatch_status())) {
+                    return "live".equalsIgnoreCase(m2.getMatch_status()) ? 1 : -1;
+                }
+                
+                // If all above are equal, sort by priority
+                return Integer.compare(priority2, priority1);
+            });
+        }
+    
+        // Add sorted matches to the final map
         for (String sport : SPORT_PRIORITY) {
             if (tempGroupedMatches.containsKey(sport)) {
-                List<Match> sportMatches = tempGroupedMatches.get(sport);
-                // Sort matches by status: live first, then pending
-                sportMatches.sort((m1, m2) -> {
-                    if ("live".equalsIgnoreCase(m1.getMatch_status()) && !"live".equalsIgnoreCase(m2.getMatch_status())) {
-                        return -1;
-                    } else if (!"live".equalsIgnoreCase(m1.getMatch_status()) && "live".equalsIgnoreCase(m2.getMatch_status())) {
-                        return 1;
-                    } else {
-                        return 0;
-                    }
-                });
-                groupedMatches.put(sport, sportMatches);
+                groupedMatches.put(sport, tempGroupedMatches.get(sport));
             }
         }
-
-        // Finally, add any remaining sports (which will include "Other")
+    
+        // Add remaining sports
         for (Map.Entry<String, List<Match>> entry : tempGroupedMatches.entrySet()) {
             if (!groupedMatches.containsKey(entry.getKey())) {
-                List<Match> sportMatches = entry.getValue();
-                // Sort matches by status: live first, then pending
-                sportMatches.sort((m1, m2) -> {
-                    if ("live".equalsIgnoreCase(m1.getMatch_status()) && !"live".equalsIgnoreCase(m2.getMatch_status())) {
-                        return -1;
-                    } else if (!"live".equalsIgnoreCase(m1.getMatch_status()) && "live".equalsIgnoreCase(m2.getMatch_status())) {
-                        return 1;
-                    } else {
-                        return 0;
-                    }
-                });
-                groupedMatches.put(entry.getKey(), sportMatches);
+                groupedMatches.put(entry.getKey(), entry.getValue());
             }
         }
-
+    
         return groupedMatches;
+    }
+
+    private boolean isTopTwoPriority(int priority, List<Match> matches) {
+        List<Integer> priorities = new ArrayList<>();
+        for (Match match : matches) {
+            int matchPriority = match.getTournament().getPriority();
+            if (!priorities.contains(matchPriority)) {
+                priorities.add(matchPriority);
+            }
+        }
+        priorities.sort(Collections.reverseOrder());
+        return priorities.indexOf(priority) < 2;
     }
 }
 

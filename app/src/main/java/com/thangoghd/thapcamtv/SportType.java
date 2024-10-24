@@ -9,6 +9,10 @@ public enum SportType {
     TENNIS("tennis", "Quần vợt", R.drawable.ic_tennis),
     VOLLEYBALL("volleyball", "Bóng chuyền", R.drawable.ic_volleyball),
     BADMINTON("badminton", "Cầu lông", R.drawable.ic_badminton),
+    BILLIARD("pool", "Bida", R.drawable.ic_billiard),
+    RACE("race", "Đua xe", R.drawable.ic_race_car),
+    BOXING("wwe", "Đấm bốc", R.drawable.ic_boxing),
+    EVENT("event", "Sự kiện", R.drawable.ic_event),
     OTHER("other", "Khác", R.drawable.ic_other_sport);
 
     private final String key;
@@ -39,6 +43,7 @@ public enum SportType {
                 return sportType;
             }
         }
+        // Default to OTHER if no match is found
         return OTHER;
     }
 }

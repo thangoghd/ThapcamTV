@@ -16,8 +16,22 @@ public class Match {
     private String match_status;
     private List<Commentator> commentators;
     private boolean is_live;
+    private String time_str;
 
-    // Getters and setters
+    private MatchUIState uiState;
+
+    public Match() {
+        this.uiState = new MatchUIState();
+    }
+
+    public MatchUIState getUiState() {
+        return uiState;
+    }
+
+    public void setUiState(MatchUIState uiState) {
+        this.uiState = uiState;
+    }
+    
     public String getId() {
         return id;
     }
@@ -116,6 +130,8 @@ public class Match {
 
     public boolean getLive(){return is_live;}
 
+    public String getTimeInMatch(){return time_str;}
+
 
 
 }
@@ -154,6 +170,7 @@ class Team {
 class Tournament {
     private String name;
     private String logo;
+    private Integer priority;
 
     // Getters and setters
     public String getName() {
@@ -171,6 +188,8 @@ class Tournament {
     public void setLogo(String logo) {
         this.logo = logo;
     }
+
+    public Integer getPriority(){return priority;}
 }
 
 class Scores {
