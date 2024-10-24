@@ -31,7 +31,7 @@ public class Match {
     public void setUiState(MatchUIState uiState) {
         this.uiState = uiState;
     }
-    
+
     public String getId() {
         return id;
     }

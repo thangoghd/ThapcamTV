@@ -1,6 +1,8 @@
 package com.thangoghd.thapcamtv;
 
 import android.os.Bundle;
+import android.os.Handler;
+import android.view.View;
 
 import androidx.annotation.NonNull;
 import androidx.leanback.app.BrowseSupportFragment;

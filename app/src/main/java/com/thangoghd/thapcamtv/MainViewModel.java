@@ -1,5 +1,7 @@
 package com.thangoghd.thapcamtv;
 
+import android.util.Log;
+
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
@@ -29,6 +31,7 @@ public class MainViewModel extends ViewModel {
             @Override
             public void onError(Exception e) {
                 // Handle error
+                Log.e("MainViewModel", "Error fetching matches", e);
             }
         });
     }

@@ -12,6 +12,8 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 public class SportRepository {
     private SportApi api;
@@ -55,32 +57,40 @@ public class SportRepository {
                 tempGroupedMatches.computeIfAbsent(match.getSport_type(), k -> new ArrayList<>()).add(match);
             }
         }
-    
-        // Sort matches within each sport type
+
+        calculateTopTwoPriorities(matches);
+
+        // Sort matches by criteria
         for (List<Match> sportMatches : tempGroupedMatches.values()) {
             sportMatches.sort((m1, m2) -> {
                 int priority1 = m1.getTournament().getPriority();
                 int priority2 = m2.getTournament().getPriority();
-                
-                // Compare by priority groups
-                if (isTopTwoPriority(priority1, matches) != isTopTwoPriority(priority2, matches)) {
-                    return isTopTwoPriority(priority2, matches) ? 1 : -1;
+
+                // Compare by top 2 priority
+                if (isTopTwoPriority(priority1) != isTopTwoPriority(priority2)) {
+                    return isTopTwoPriority(priority2) ? 1 : -1;
                 }
-                
-                // Compare by live broadcast
+
+                // Compare by "pending" status
+                if ("pending".equalsIgnoreCase(m1.getMatch_status()) != "pending".equalsIgnoreCase(m2.getMatch_status())) {
+                    return "pending".equalsIgnoreCase(m2.getMatch_status()) ? 1 : -1;
+                }
+
+                // Compare by broadcast status
                 if (m1.getLive() != m2.getLive()) {
                     return m2.getLive() ? 1 : -1;
                 }
-                
-                // Compare by match status
+
+                // Compare by match status (live)
                 if ("live".equalsIgnoreCase(m1.getMatch_status()) != "live".equalsIgnoreCase(m2.getMatch_status())) {
                     return "live".equalsIgnoreCase(m2.getMatch_status()) ? 1 : -1;
                 }
-                
-                // If all above are equal, sort by priority
+
+                // Compare by priority
                 return Integer.compare(priority2, priority1);
             });
         }
+
     
         // Add sorted matches to the final map
         for (String sport : SPORT_PRIORITY) {
@@ -99,16 +109,20 @@ public class SportRepository {
         return groupedMatches;
     }
 
-    private boolean isTopTwoPriority(int priority, List<Match> matches) {
-        List<Integer> priorities = new ArrayList<>();
-        for (Match match : matches) {
-            int matchPriority = match.getTournament().getPriority();
-            if (!priorities.contains(matchPriority)) {
-                priorities.add(matchPriority);
-            }
-        }
-        priorities.sort(Collections.reverseOrder());
-        return priorities.indexOf(priority) < 2;
+    // This code is used to calculate and check the top two priorities in a list of matches
+    private Set<Integer> topTwoPriorities;
+
+    private void calculateTopTwoPriorities(List<Match> matches) {
+        topTwoPriorities = matches.stream()
+                .map(match -> match.getTournament().getPriority())
+                .distinct()
+                .sorted(Collections.reverseOrder())
+                .limit(2)
+                .collect(Collectors.toSet());
+    }
+
+    private boolean isTopTwoPriority(int priority) {
+        return topTwoPriorities.contains(priority);
     }
 }
 
