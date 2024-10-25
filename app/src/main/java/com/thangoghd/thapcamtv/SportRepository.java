@@ -18,7 +18,7 @@ import java.util.stream.Collectors;
 public class SportRepository {
     private SportApi api;
     private static final List<String> SPORT_PRIORITY = Arrays.asList(
-        "football", "basketball", "esports", "tennis", "volleyball", "badminton"
+        "football", "basketball", "esports", "tennis", "volleyball", "badminton", "race", "pool", "wwe", "event"
     );
 
     public SportRepository(SportApi api) {
