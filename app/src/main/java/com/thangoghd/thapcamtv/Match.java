@@ -4,6 +4,7 @@ import java.util.List;
 
 public class Match {
     private String id;
+    private String key_sync;
     private String name;
     private String slug;
     private String date;
@@ -18,19 +19,6 @@ public class Match {
     private boolean is_live;
     private String time_str;
 
-    private MatchUIState uiState;
-
-    public Match() {
-        this.uiState = new MatchUIState();
-    }
-
-    public MatchUIState getUiState() {
-        return uiState;
-    }
-
-    public void setUiState(MatchUIState uiState) {
-        this.uiState = uiState;
-    }
 
     public String getId() {
         return id;
@@ -38,6 +26,14 @@ public class Match {
 
     public void setId(String id) {
         this.id = id;
+    }
+
+    public String getSync() {
+        return key_sync;
+    }
+
+    public void setSync(String key_sync) {
+        this.key_sync = key_sync;
     }
 
     public String getName() {
@@ -131,6 +127,8 @@ public class Match {
     public boolean getLive(){return is_live;}
 
     public String getTimeInMatch(){return time_str;}
+
+    public void setTimeInMatch(String time_str){this.time_str = time_str;}
 
 
 

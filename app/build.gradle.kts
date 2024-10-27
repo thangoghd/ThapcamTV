@@ -42,4 +42,5 @@ dependencies {
     implementation("com.squareup.okhttp3:logging-interceptor:5.0.0-alpha.14")
     // AndroidX Leanback for TV UI components
     implementation ("androidx.leanback:leanback:1.0.0")
+    implementation(libs.androidx.appcompat)
 }

@@ -1,6 +1,8 @@
 package com.thangoghd.thapcamtv;
 import android.util.Log;
 
+import androidx.annotation.NonNull;
+
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
@@ -16,7 +18,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 public class SportRepository {
-    private SportApi api;
+    private final SportApi api;
     private static final List<String> SPORT_PRIORITY = Arrays.asList(
         "football", "basketball", "esports", "tennis", "volleyball", "badminton", "race", "pool", "wwe", "event"
     );
@@ -29,7 +31,7 @@ public class SportRepository {
         Log.d("SportRepository", "Fetching live matches...");
         api.getLiveMatches().enqueue(new Callback<ApiResponse>() {
             @Override
-            public void onResponse(Call<ApiResponse> call, Response<ApiResponse> response) {
+            public void onResponse(@NonNull Call<ApiResponse> call, @NonNull Response<ApiResponse> response) {
                 if (response.isSuccessful() && response.body() != null) {
                     Log.d("SportRepository", "Received " + response.body().getData().size() + " matches");
                     callback.onSuccess(response.body().getData());
@@ -40,7 +42,7 @@ public class SportRepository {
             }
 
             @Override
-            public void onFailure(Call<ApiResponse> call, Throwable t) {
+            public void onFailure(@NonNull Call<ApiResponse> call, @NonNull Throwable t) {
                 Log.e("SportRepository", "API call failed", t);
                 callback.onError((Exception) t);
             }
@@ -71,14 +73,14 @@ public class SportRepository {
                     return isTopTwoPriority(priority2) ? 1 : -1;
                 }
 
-                // Compare by "pending" status
-                if ("pending".equalsIgnoreCase(m1.getMatch_status()) != "pending".equalsIgnoreCase(m2.getMatch_status())) {
-                    return "pending".equalsIgnoreCase(m2.getMatch_status()) ? 1 : -1;
-                }
-
                 // Compare by broadcast status
                 if (m1.getLive() != m2.getLive()) {
                     return m2.getLive() ? 1 : -1;
+                }
+
+                // Compare by "pending" status
+                if ("pending".equalsIgnoreCase(m1.getMatch_status()) != "pending".equalsIgnoreCase(m2.getMatch_status())) {
+                    return "pending".equalsIgnoreCase(m2.getMatch_status()) ? 1 : -1;
                 }
 
                 // Compare by match status (live)
