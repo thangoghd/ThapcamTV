@@ -43,18 +43,20 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:gravity="center"
-                android:text="THAPCAM TV xem trực tiếp bóng đá, bóng rổ, bóng chuyền, tennis online nhanh nhất - Thập Cẩm TV"
-                android:textSize="12sp"
-                android:textStyle="bold"
                 android:paddingTop="8dp"
-                android:paddingBottom="4dp" />
+                android:paddingBottom="4dp"
+                android:text="@string/description"
+                android:textSize="12sp"
+                android:textStyle="bold" />
 
         </LinearLayout>
 
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/recyclerViewSports"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content" />
+            android:layout_height="wrap_content"
+            android:paddingStart="15dp"
+            android:paddingEnd="15dp" />
 
         <View
             android:layout_width="match_parent"

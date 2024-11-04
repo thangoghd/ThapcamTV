@@ -42,5 +42,9 @@ dependencies {
     implementation("com.squareup.okhttp3:logging-interceptor:5.0.0-alpha.14")
     // AndroidX Leanback for TV UI components
     implementation ("androidx.leanback:leanback:1.0.0")
+    // https://mvnrepository.com/artifact/com.google.code.gson/gson
+    implementation("com.google.code.gson:gson:2.11.0")
+    // https://mvnrepository.com/artifact/com.google.android.exoplayer/exoplayer
+    implementation("com.google.android.exoplayer:exoplayer:2.19.1")
     implementation(libs.androidx.appcompat)
 }

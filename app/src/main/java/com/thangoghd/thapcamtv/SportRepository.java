@@ -3,6 +3,8 @@ import android.util.Log;
 
 import androidx.annotation.NonNull;
 
+import com.thangoghd.thapcamtv.models.Match;
+
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
@@ -55,7 +57,7 @@ public class SportRepository {
     
         // Group matches by sport type
         for (Match match : matches) {
-            if (!"finished".equalsIgnoreCase(match.getMatch_status())) {
+            if (!"finished".equalsIgnoreCase(match.getMatch_status()) && !"canceled".equalsIgnoreCase(match.getMatch_status())) {
                 tempGroupedMatches.computeIfAbsent(match.getSport_type(), k -> new ArrayList<>()).add(match);
             }
         }
@@ -78,14 +80,14 @@ public class SportRepository {
                     return m2.getLive() ? 1 : -1;
                 }
 
-                // Compare by "pending" status
-                if ("pending".equalsIgnoreCase(m1.getMatch_status()) != "pending".equalsIgnoreCase(m2.getMatch_status())) {
-                    return "pending".equalsIgnoreCase(m2.getMatch_status()) ? 1 : -1;
-                }
-
                 // Compare by match status (live)
                 if ("live".equalsIgnoreCase(m1.getMatch_status()) != "live".equalsIgnoreCase(m2.getMatch_status())) {
                     return "live".equalsIgnoreCase(m2.getMatch_status()) ? 1 : -1;
+                }
+
+                // Compare by "pending" status
+                if ("pending".equalsIgnoreCase(m1.getMatch_status()) != "pending".equalsIgnoreCase(m2.getMatch_status())) {
+                    return "pending".equalsIgnoreCase(m2.getMatch_status()) ? 1 : -1;
                 }
 
                 // Compare by priority

@@ -13,6 +13,8 @@
     <string name="buy_2">AT $9.99</string>
     <string name="movie">Movie</string>
 
+    <string name="description">THAPCAM TV xem trực tiếp bóng đá, bóng rổ, bóng chuyền, tennis online nhanh nhất - Thập Cẩm TV</string>
+
     <!-- Error messages -->
     <string name="error_fragment_message">An error occurred</string>
     <string name="dismiss_error">Dismiss</string>
@@ -30,5 +32,10 @@
     <string name="match_finished">Kết thúc</string>
     <string name="match_canceled">Bị huỷ</string>
     <string name="match_upcoming">Sắp diễn ra</string>
+
+    <!--    Menu-->
+    <string name="replay">Xem lại</string>
+    <string name="highlight">Xem Highlight</string>
+    <string name="live_television">Xem trực tiếp</string>
 
 </resources>

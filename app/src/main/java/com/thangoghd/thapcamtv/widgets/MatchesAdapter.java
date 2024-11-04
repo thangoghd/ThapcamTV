@@ -1,4 +1,4 @@
-package com.thangoghd.thapcamtv;
+package com.thangoghd.thapcamtv.widgets;
 
 import android.view.LayoutInflater;
 import android.view.View;
@@ -12,35 +12,64 @@ import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
+import com.thangoghd.thapcamtv.models.Commentator;
+import com.thangoghd.thapcamtv.LiveActivity;
+import com.thangoghd.thapcamtv.models.Match;
+import com.thangoghd.thapcamtv.R;
 
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 
 public class MatchesAdapter extends RecyclerView.Adapter<MatchesAdapter.MatchViewHolder> {
     private List<Match> matches;
+    private final OnMatchClickListener matchClickListener;
 
-    public MatchesAdapter(List<Match> matches) {
-        this.matches = matches;
+    public interface OnMatchClickListener {
+        void onMatchClick(String matchId);
     }
 
+    public MatchesAdapter(List<Match> matches, OnMatchClickListener listener) {
+        this.matches = (matches != null) ? matches : new ArrayList<>();
+        this.matchClickListener = listener;
+    }
+
+    @Override
+    public int getItemViewType(int position) {
+        Match match = matches.get(position);
+        return (match.getAway() == null) ? 1 : 0;
+    }
+    
     @NonNull
     @Override
     public MatchViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        View view = LayoutInflater.from(parent.getContext())
-                .inflate(R.layout.item_match, parent, false);
+        View view;
+        if (viewType == 1) { 
+            view = LayoutInflater.from(parent.getContext())
+                    .inflate(R.layout.item_event, parent, false);
+        } else {
+            view = LayoutInflater.from(parent.getContext())
+                    .inflate(R.layout.item_match, parent, false);
+        }
         return new MatchViewHolder(view);
     }
 
     @Override
     public void onBindViewHolder(@NonNull MatchViewHolder holder, int position) {
-        holder.bind(matches.get(position));
+        Match match = matches.get(position);
+        holder.bind(match);
+
+        // Handle onClick event for items in RecyclerView
+        holder.itemView.setOnClickListener(v -> {
+            matchClickListener.onMatchClick(match.getId());
+        });
     }
 
     @Override
     public int getItemCount() {
-        return matches.size();
+        return (matches != null) ? matches.size() : 0;
     }
 
     public void updateMatches(List<Match> newMatches) {
@@ -57,59 +86,36 @@ public class MatchesAdapter extends RecyclerView.Adapter<MatchesAdapter.MatchVie
 
         void bind(Match match) {
             TextView tournamentNameView = view.findViewById(R.id.tournamentName);
-            if (match.getTournament() != null) {
-                tournamentNameView.setText(match.getTournament().getName());
-            } else {
-                tournamentNameView.setText(view.getContext().getString(R.string.unknown_tournament));
-            }
+            tournamentNameView.setText(match.getTournament() != null ? match.getTournament().getName() : view.getContext().getString(R.string.unknown_tournament));
 
             // Set home team info
             TextView homeNameView = view.findViewById(R.id.homeName);
             ImageView homeLogoView = view.findViewById(R.id.homeLogo);
-            if (match.getHome() != null) {
-                homeNameView.setText(truncateText(match.getHome().getName()));
-                if (match.getHome().getLogo() != null) {
-                    Glide.with(view.getContext())
-                            .load(match.getHome().getLogo())
-                            .into(homeLogoView);
-                } else {
-                    homeLogoView.setImageResource(R.drawable.default_team_logo);
-                }
+            homeNameView.setText(match.getAway() != null ? truncateText(match.getHome().getName()) : match.getHome().getName());
+            if (match.getHome().getLogo() != null) {
+                Glide.with(view.getContext())
+                        .load(match.getHome().getLogo())
+                        .error(R.drawable.default_team_logo)
+                        .into(homeLogoView);
+
             } else {
                 homeNameView.setText(view.getContext().getString(R.string.unknown_team));
                 homeLogoView.setImageResource(R.drawable.default_team_logo);
             }
 
             // Set away team info
-            TextView awayNameView = view.findViewById(R.id.awayName);
-            ImageView awayLogoView = view.findViewById(R.id.awayLogo);
             if (match.getAway() != null) {
+                TextView awayNameView = view.findViewById(R.id.awayName);
+                ImageView awayLogoView = view.findViewById(R.id.awayLogo);
                 awayNameView.setText(truncateText(match.getAway().getName()));
-                if (match.getAway().getLogo() != null) {
-                    Glide.with(view.getContext())
-                            .load(match.getAway().getLogo())
-                            .into(awayLogoView);
-                } else {
-                    awayLogoView.setImageResource(R.drawable.default_team_logo);
-                }
-            } else {
-                awayNameView.setText(truncateText(match.getHome().getName()));
-                if (match.getHome().getLogo() != null) {
-                    Glide.with(view.getContext())
-                            .load(match.getHome().getLogo())
-                            .into(awayLogoView);
-                } else {
-                    awayLogoView.setImageResource(R.drawable.default_team_logo);
-                }
-            }
+                Glide.with(view.getContext())
+                        .load(match.getAway().getLogo())
+                        .error(R.drawable.default_team_logo)
+                        .into(awayLogoView);
 
-            // Set match score
-            TextView scoreView = view.findViewById(R.id.matchScore);
-            if (match.getScores() != null) {
-                String score = view.getContext().getString(R.string.match_score, match.getScores().getHome(), match.getScores().getAway());
-                scoreView.setText(score);
-            } else {
-                scoreView.setText(view.getContext().getString(R.string.versus));
+                TextView scoreView = view.findViewById(R.id.matchScore);
+                scoreView.setText(view.getContext().getString(R.string.match_score, match.getScores().getHome(), match.getScores().getAway()));
+                
             }
 
             // Set live status
@@ -166,32 +172,30 @@ public class MatchesAdapter extends RecyclerView.Adapter<MatchesAdapter.MatchVie
                     ImageView avatarView = commentatorView.findViewById(R.id.commentatorIcon);
                     TextView nameView = commentatorView.findViewById(R.id.commentatorName);
 
-//                if (commentator.getAvatar() != null && !commentator.getAvatar().isEmpty()) {
-//                    Glide.with(view.getContext())
-//                            .load(commentator.getAvatar())
-//                            .circleCrop()
-//                            .into(avatarView);
-//                } else {
-//                    avatarView.setImageResource(R.drawable.default_avatar);
-//                }
+                if (commentator.getAvatar() != null && !commentator.getAvatar().isEmpty()) {
+                    Glide.with(view.getContext())
+                            .load(commentator.getAvatar())
+                            .circleCrop()
+                            .into(avatarView);
+                } else {
+                    avatarView.setImageResource(R.drawable.default_avatar);
+                }
 
                     nameView.setText(commentator.getName());
-                    avatarView.setImageResource((R.drawable.baseline_mic_15));
-                    avatarView.setScaleType(ImageView.ScaleType.CENTER_INSIDE);
                     commentatorLayout.addView(commentatorView);
                 }
             } else {
-                commentatorLayout.setVisibility(View.VISIBLE);
+                commentatorLayout.setVisibility(View.INVISIBLE);
             }
 
             view.setOnFocusChangeListener((v, hasFocus) -> {
                 if (hasFocus) {
                     v.setBackgroundResource(R.drawable.match_background_focused);
-                    ((MainActivity) v.getContext()).focusedPosition = getAdapterPosition();
+                    ((LiveActivity) v.getContext()).focusedPosition = getAdapterPosition();
                 } else {
                     v.setBackgroundResource(R.drawable.match_background_normal);
-                    if (((MainActivity) v.getContext()).focusedPosition == getAdapterPosition()) {
-                        ((MainActivity) v.getContext()).focusedPosition = RecyclerView.NO_POSITION;
+                    if (((LiveActivity) v.getContext()).focusedPosition == getAdapterPosition()) {
+                        ((LiveActivity) v.getContext()).focusedPosition = RecyclerView.NO_POSITION;
                     }
                 }
             });
@@ -210,8 +214,6 @@ public class MatchesAdapter extends RecyclerView.Adapter<MatchesAdapter.MatchVie
             SimpleDateFormat sdf = new SimpleDateFormat("HH:mm dd/MM", Locale.getDefault());
             return sdf.format(new Date(timestamp));
         }
-
-
     }
 
 }

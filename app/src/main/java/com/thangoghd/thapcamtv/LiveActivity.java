@@ -1,22 +1,45 @@
 package com.thangoghd.thapcamtv;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.util.Log;
 import android.widget.ImageView;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.google.gson.Gson;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.thangoghd.thapcamtv.models.Match;
+import com.thangoghd.thapcamtv.widgets.MatchesAdapter;
+import com.thangoghd.thapcamtv.widgets.SportsAdapter;
+
+
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 
-public class MainActivity extends AppCompatActivity {
+import retrofit2.Call;
+import retrofit2.Response;
+
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.X509TrustManager;
+import javax.net.ssl.HttpsURLConnection;
+import java.security.cert.X509Certificate;
+
+
+public class LiveActivity extends AppCompatActivity {
     private RecyclerView recyclerViewSports;
     private RecyclerView recyclerViewMatches;
     private SportRepository sportRepository;
@@ -38,6 +61,8 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        allowAllSSL();
+
         backgroundImageView = findViewById(R.id.backgroundImageView);
         recyclerViewSports = findViewById(R.id.recyclerViewSports);
         recyclerViewMatches = findViewById(R.id.recyclerViewMatches);
@@ -48,6 +73,7 @@ public class MainActivity extends AppCompatActivity {
         setupSportsRecyclerView();
         // Load matches for the default sport (football)
         onSportSelected(currentSportIndex);
+
         setupPeriodicRefresh();
     }
 
@@ -91,6 +117,7 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+
     private void loadMatches(String sportTypeKey) { // Get the key of the selected sport type
         sportRepository.getLiveMatches(new RepositoryCallback<List<Match>>() {
             @Override
@@ -110,12 +137,12 @@ public class MainActivity extends AppCompatActivity {
                 // Update adapter for sports categories
                 updateSportsAdapter(matchesBySportType);
                 // Update RecyclerView with matches
-                updateMatchesRecyclerView(); 
+                updateMatchesRecyclerView();
             }
 
             @Override
             public void onError(Exception e) {
-                Toast.makeText(MainActivity.this, "Error loading matches", Toast.LENGTH_SHORT).show();
+                Toast.makeText(LiveActivity.this, "Không thể tải dữ liệu của các trận đấu.", Toast.LENGTH_SHORT).show();
             }
         });
     }
@@ -132,14 +159,16 @@ public class MainActivity extends AppCompatActivity {
 
         // Update the list of available sports
         availableSportTypes = availableSports.toArray(new SportType[0]);
-
-
         sportsAdapter.updateSports(availableSportTypes);
     }
 
     private void updateMatchesRecyclerView() {
         if (matchesAdapter == null) {
-            matchesAdapter = new MatchesAdapter(matches);
+            // Initialize matchesAdapter and pass listener to handle onClick event
+            matchesAdapter = new MatchesAdapter(matches, matchId -> {
+                // Call the fetchMatchStreamUrl function when the user clicks on a match
+                fetchMatchStreamUrl(matchId);
+            });
             // Set LayoutManager for recyclerViewMatches
             recyclerViewMatches.setLayoutManager(new GridLayoutManager(this, 3));
             recyclerViewMatches.addItemDecoration(new SpaceItemDecoration(0, 0, 0, 20));
@@ -149,7 +178,6 @@ public class MainActivity extends AppCompatActivity {
             matchesAdapter.updateMatches(matches);
         }
 
-
         recyclerViewSports.smoothScrollToPosition(currentSportIndex);
         recyclerViewSports.post(() -> {
             RecyclerView.ViewHolder viewHolder = recyclerViewSports.findViewHolderForAdapterPosition(currentSportIndex);
@@ -158,6 +186,8 @@ public class MainActivity extends AppCompatActivity {
             }
         });
     }
+
+
     private void setupPeriodicRefresh() {
         refreshRunnable = new Runnable() {
             @Override
@@ -170,6 +200,7 @@ public class MainActivity extends AppCompatActivity {
             }
         };
     }
+
 
     @Override
     protected void onResume() {
@@ -237,71 +268,138 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onError(Exception e) {
                 runOnUiThread(() -> {
-                    Toast.makeText(MainActivity.this, "Error refreshing matches", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(LiveActivity.this, "Không thể lấy dữ liệu của các trận đấu.", Toast.LENGTH_SHORT).show();
                 });
             }
         });
     }
 
+    private void fetchMatchStreamUrl(String matchId) {
+        SportApi sportApi = ApiManager.getSportApi();
+        Call<JsonObject> call = sportApi.getMatchStreamUrl(matchId);
 
-    // Helper method to find match position by ID
-    private int findMatchPositionById(String matchId) {
-        for (int i = 0; i < matches.size(); i++) {
-            if (matches.get(i).getId().equals(matchId)) {
-                return i;
+        call.enqueue(new retrofit2.Callback<JsonObject>() {
+            @Override
+            public void onResponse(@NonNull Call<JsonObject> call, @NonNull Response<JsonObject> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    String jsonResponse = response.body().toString();
+                    parseJsonAndStartPlayer(jsonResponse);
+                } else {
+                    String errorMessage = "Mã lỗi: " + response.code();
+                    Log.e("API_ERROR", errorMessage);
+                    runOnUiThread(() -> Toast.makeText(LiveActivity.this, "Lỗi khi tải luồng phát sóng." + errorMessage, Toast.LENGTH_SHORT).show());
+                }
             }
-        }
-        return -1;
+
+            @Override
+            public void onFailure(@NonNull Call<JsonObject> call, @NonNull Throwable t) {
+                runOnUiThread(() -> Toast.makeText(LiveActivity.this, "Lỗi khi tải luồng phát sóng.", Toast.LENGTH_SHORT).show());
+            }
+        });
     }
 
-        private void changeBackground(SportType sportType) {
-        int newBackgroundResource = R.drawable.background_other;
 
-        switch (sportType) {
-            case ESPORTS:
-                newBackgroundResource = R.drawable.background_esports;
-                break;
-            case BASKETBALL:
-                newBackgroundResource = R.drawable.background_basketball;
-                break;
-            case FOOTBALL:
-                newBackgroundResource = R.drawable.background_football;
-                break;
-            case RACE:
-                newBackgroundResource = R.drawable.background_race;
-                break;
-            case BOXING:
-                newBackgroundResource = R.drawable.background_wwe;
-                break;
-            case VOLLEYBALL:
-                newBackgroundResource = R.drawable.background_volleyball;
-                break;
-            case TENNIS:
-                newBackgroundResource = R.drawable.background_tennis;
-                break;
-            case BADMINTON:
-                newBackgroundResource = R.drawable.background_badminton;
-                break;
-            case BILLIARD:
-                newBackgroundResource = R.drawable.background_pool;
-                break;
-            default:
-                break;
+    private void parseJsonAndStartPlayer(String jsonResponse) {
+        Gson gson = new Gson();
+        JsonObject jsonObject = gson.fromJson(jsonResponse, JsonObject.class);
+
+        // Check if "play_urls" is null
+        if (jsonObject.getAsJsonObject("data").get("play_urls").isJsonNull()) {
+            runOnUiThread(() -> Toast.makeText(this, "Trận đấu chưa được phát sóng.", Toast.LENGTH_SHORT).show());
+            return;
         }
 
-        final int backgroundResourceToSet = newBackgroundResource;
+        JsonArray playUrls = jsonObject.getAsJsonObject("data").getAsJsonArray("play_urls");
 
-        backgroundImageView.animate()
-                .alpha(0f)
-                .setDuration(300)
-                .withEndAction(() -> {
-                    backgroundImageView.setImageResource(backgroundResourceToSet);
-                    backgroundImageView.animate()
-                            .alpha(1f)
-                            .setDuration(300)
-                            .start();
-                })
-                .start();
+        HashMap<String, String> qualityMap = new HashMap<>();
+        for (JsonElement element : playUrls) {
+            JsonObject urlObject = element.getAsJsonObject();
+            String name = urlObject.get("name").getAsString();
+            String url = urlObject.get("url").getAsString();
+            qualityMap.put(name, url);
+        }
+
+        if (!qualityMap.isEmpty()) {
+            startVideoPlayer(qualityMap);
+        } else {
+            runOnUiThread(() -> Toast.makeText(this, "Trận đấu chưa được phát sóng.", Toast.LENGTH_SHORT).show());
+        }
+    }
+
+    private void startVideoPlayer(HashMap<String, String> qualityMap) {
+        runOnUiThread(() -> {
+            Intent intent = new Intent(this, PlayerActivity.class);
+            intent.putExtra("stream_url", qualityMap);
+            startActivity(intent);
+        });
+    }
+
+
+    private void allowAllSSL() {
+        try {
+            SSLContext sc = SSLContext.getInstance("TLS");
+            sc.init(null, new TrustManager[] { new X509TrustManager() {
+                @Override
+                public void checkClientTrusted(X509Certificate[] chain, String authType) {}
+                @Override
+                public void checkServerTrusted(X509Certificate[] chain, String authType) {}
+                @Override
+                public X509Certificate[] getAcceptedIssuers() { return new X509Certificate[0]; }
+            } }, new java.security.SecureRandom());
+            HttpsURLConnection.setDefaultSSLSocketFactory(sc.getSocketFactory());
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void changeBackground(SportType sportType) {
+    int newBackgroundResource = R.drawable.background_other;
+
+    switch (sportType) {
+        case ESPORTS:
+            newBackgroundResource = R.drawable.background_esports;
+            break;
+        case BASKETBALL:
+            newBackgroundResource = R.drawable.background_basketball;
+            break;
+        case FOOTBALL:
+            newBackgroundResource = R.drawable.background_football;
+            break;
+        case RACE:
+            newBackgroundResource = R.drawable.background_race;
+            break;
+        case BOXING:
+            newBackgroundResource = R.drawable.background_wwe;
+            break;
+        case VOLLEYBALL:
+            newBackgroundResource = R.drawable.background_volleyball;
+            break;
+        case TENNIS:
+            newBackgroundResource = R.drawable.background_tennis;
+            break;
+        case BADMINTON:
+            newBackgroundResource = R.drawable.background_badminton;
+            break;
+        case BILLIARD:
+            newBackgroundResource = R.drawable.background_pool;
+            break;
+        default:
+            break;
+    }
+
+    final int backgroundResourceToSet = newBackgroundResource;
+
+    backgroundImageView.animate()
+            .alpha(0f)
+            .setDuration(300)
+            .withEndAction(() -> {
+                backgroundImageView.setImageResource(backgroundResourceToSet);
+                backgroundImageView.animate()
+                        .alpha(1f)
+                        .setDuration(300)
+                        .start();
+            })
+            .start();
     }
 
 }
