@@ -8,8 +8,8 @@
 
     <ImageView
         android:id="@+id/highlight_image"
-        android:layout_width="275dp"
-        android:layout_height="156dp"
+        android:layout_width="300dp"
+        android:layout_height="170dp"
         android:layout_gravity="center"
         android:scaleType="centerCrop" />
 
