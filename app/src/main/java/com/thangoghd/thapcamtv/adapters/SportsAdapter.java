@@ -39,7 +39,9 @@ public class SportsAdapter extends RecyclerView.Adapter<SportsAdapter.ViewHolder
         SportType sportType = sportTypes[position];
         holder.sportName.setText(sportType.getVietnameseName());
         holder.sportIcon.setImageResource(sportType.getIconResourceId());
-        Log.d("SportsAdapter", "Focus changed on position: " + holder.getAdapterPosition());
+        holder.itemView.setOnFocusChangeListener((v, hasFocus) -> {
+            Log.d("SportAdapter", "Focus changed on position: " + holder.getAdapterPosition() + " hasFocus: " + hasFocus);
+        });
 
         holder.itemView.setOnClickListener(v -> listener.onSportClick(position));
     }
@@ -61,6 +63,7 @@ public class SportsAdapter extends RecyclerView.Adapter<SportsAdapter.ViewHolder
     }
     
     public void updateSports(SportType[] newSportTypes) {
+        if (this.sportTypes == newSportTypes) return;
         this.sportTypes = newSportTypes;
         notifyDataSetChanged();
     }

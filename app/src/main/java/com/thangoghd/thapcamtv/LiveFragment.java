@@ -76,7 +76,7 @@ public class LiveFragment extends Fragment {
 
         setupPeriodicRefresh();
 
-        return view; // Trả về view đã tạo
+        return view;
     }
 
     private void setupSportsRecyclerView() {
@@ -150,7 +150,7 @@ public class LiveFragment extends Fragment {
 
     private void updateSportsAdapter(Map<String, List<Match>> matchesBySportType) {
         List<SportType> availableSports = new ArrayList<>();
-        // Filter out the sports categories with matches
+        // Filter sports categories with matches
         for (SportType sportType : SportType.values()) {
             List<Match> sportMatches = matchesBySportType.get(sportType.getKey());
             if (sportMatches != null && !sportMatches.isEmpty()) {
@@ -158,9 +158,37 @@ public class LiveFragment extends Fragment {
             }
         }
 
-        // Update the list of available sports
-        availableSportTypes = availableSports.toArray(new SportType[0]);
+        // Compare the new list with the current list
+        SportType[] newSportTypes = availableSports.toArray(new SportType[0]);
+        if (newSportTypes.length == availableSportTypes.length) {
+            boolean isSame = true;
+            for (int i = 0; i < newSportTypes.length; i++) {
+                if (!newSportTypes[i].equals(availableSportTypes[i])) {
+                    isSame = false;
+                    break;
+                }
+            }
+
+            // If the list does not change, no update is needed
+            if (isSame) return;
+        }
+
+        // Get the index of the previous focus position
+        int previousFocusPosition = currentSportIndex;
+
+        availableSportTypes = newSportTypes;
         sportsAdapter.updateSports(availableSportTypes);
+
+        // Ensure focus on the selected sport
+        recyclerViewSports.post(() -> {
+            if (previousFocusPosition >= 0 && previousFocusPosition < availableSportTypes.length) {
+                recyclerViewSports.scrollToPosition(previousFocusPosition);
+                RecyclerView.ViewHolder viewHolder = recyclerViewSports.findViewHolderForAdapterPosition(previousFocusPosition);
+                if (viewHolder != null) {
+                    viewHolder.itemView.requestFocus();
+                }
+            }
+        });
     }
 
     private void updateMatchesRecyclerView() {
