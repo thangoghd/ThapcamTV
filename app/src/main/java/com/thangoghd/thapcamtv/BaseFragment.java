@@ -136,11 +136,16 @@ public abstract class BaseFragment extends Fragment implements ReplayAdapter.OnH
 
         view.findViewById(R.id.goToPage).setOnClickListener(v -> {
             EditText pageInput = view.findViewById(R.id.pageInput);
-            int page = Integer.parseInt(pageInput.getText().toString());
-            if (page > 0 && page <= maxPages) {
-                goToPage(page);
+            String pageText = pageInput.getText().toString();
+            if (!pageText.isEmpty()) {
+                int page = Integer.parseInt(pageText);
+                if (page > 0 && page <= maxPages) {
+                    goToPage(page);
+                } else {
+                    Toast.makeText(getContext(), "Số trang không hợp lệ", Toast.LENGTH_SHORT).show();
+                }
             } else {
-                Toast.makeText(getContext(), "Số trang không hợp lệ", Toast.LENGTH_SHORT).show();
+                Toast.makeText(getContext(), "Vui lòng nhập số trang", Toast.LENGTH_SHORT).show();
             }
         });
     }

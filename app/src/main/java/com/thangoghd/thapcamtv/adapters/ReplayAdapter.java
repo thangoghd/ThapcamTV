@@ -29,7 +29,7 @@ public class ReplayAdapter extends RecyclerView.Adapter<ReplayAdapter.HighlightV
     @NonNull
     @Override
     public HighlightViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_highlight, parent, false);
+        View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_replay, parent, false);
         return new HighlightViewHolder(view);
     }
 

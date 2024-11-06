@@ -35,7 +35,7 @@
 
     <!--    Menu-->
     <string name="fullmatch">Xem lại</string>
-    <string name="highlight">Xem Highlight</string>
-    <string name="live_television">Xem trực tiếp</string>
+    <string name="highlight">Highlight</string>
+    <string name="live_television">Trực tiếp</string>
 
 </resources>

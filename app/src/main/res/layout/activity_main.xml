@@ -28,47 +28,83 @@
             android:layout_marginBottom="32dp"
             android:orientation="vertical">
 
-            <TextView
+            <LinearLayout
                 android:id="@+id/navLive"
                 android:layout_width="match_parent"
                 android:layout_height="45dp"
                 android:layout_marginStart="12dp"
                 android:background="@drawable/menu_item_normal"
-                android:drawableStart="@drawable/navbar_ic_live"
-                android:drawablePadding="20dp"
-                android:drawableTint="@android:color/white"
-                android:focusable="true"
+                android:orientation="horizontal"
                 android:gravity="center_vertical"
-                android:text="@string/live_television"
-                android:textColor="@android:color/white" />
+                android:focusable="true">
 
-            <TextView
+                <ImageView
+                    android:id="@+id/navLiveIcon"
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:src="@drawable/navbar_ic_live" />
+
+                <TextView
+                    android:id="@+id/navLiveText"
+                    android:layout_width="100dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="14dp"
+                    android:text="@string/live_television"
+                    android:textColor="@android:color/white"
+                    android:textSize="16sp" />
+            </LinearLayout>
+
+            <LinearLayout
                 android:id="@+id/navHighlight"
                 android:layout_width="match_parent"
                 android:layout_height="45dp"
-                android:layout_marginStart="12dp"
                 android:background="@drawable/menu_item_normal"
-                android:drawableStart="@drawable/navbar_ic_highlight"
-                android:drawablePadding="20dp"
-                android:drawableTint="@android:color/white"
-                android:focusable="true"
+                android:orientation="horizontal"
                 android:gravity="center_vertical"
-                android:text="@string/highlight"
-                android:textColor="@android:color/white" />
+                android:focusable="true">
 
-            <TextView
-                android:id="@+id/navReplay"
+                <ImageView
+                    android:id="@+id/navHighlightIcon"
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:layout_marginStart="12dp"
+                    android:src="@drawable/navbar_ic_highlight" />
+
+                <TextView
+                    android:id="@+id/navHighlightText"
+                    android:layout_width="100dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="14dp"
+                    android:text="@string/highlight"
+                    android:textColor="@android:color/white"
+                    android:textSize="16sp" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/navFullMatch"
                 android:layout_width="match_parent"
                 android:layout_height="45dp"
-                android:layout_marginStart="12dp"
                 android:background="@drawable/menu_item_normal"
-                android:drawableStart="@drawable/navbar_ic_replay"
-                android:drawablePadding="20dp"
-                android:drawableTint="@android:color/white"
-                android:focusable="true"
+                android:orientation="horizontal"
                 android:gravity="center_vertical"
-                android:text="@string/fullmatch"
-                android:textColor="@android:color/white" />
+                android:focusable="true">
+
+                <ImageView
+                    android:id="@+id/navFullMatchIcon"
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:layout_marginStart="12dp"
+                    android:src="@drawable/navbar_ic_replay" />
+
+                <TextView
+                    android:id="@+id/navFullMatchText"
+                    android:layout_width="100dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="14dp"
+                    android:text="@string/fullmatch"
+                    android:textColor="@android:color/white"
+                    android:textSize="16sp" />
+            </LinearLayout>
 
             <Space
                 android:layout_width="match_parent"
