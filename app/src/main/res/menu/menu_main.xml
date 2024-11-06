@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
     <item
-        android:id="@+id/action_live"
+        android:id="@+id/nav_live"
         android:title="@string/live_television"/>
     <item
-        android:id="@+id/action_highlight"
+        android:id="@+id/nav_highlight"
         android:title="@string/highlight"/>
     <item
-        android:id="@+id/action_replay"
-        android:title="@string/replay"/>
+        android:id="@+id/nav_replay"
+        android:title="@string/fullmatch"/>
 </menu>

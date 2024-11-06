@@ -47,4 +47,5 @@ dependencies {
     // https://mvnrepository.com/artifact/com.google.android.exoplayer/exoplayer
     implementation("com.google.android.exoplayer:exoplayer:2.19.1")
     implementation(libs.androidx.appcompat)
+    implementation(libs.material)
 }

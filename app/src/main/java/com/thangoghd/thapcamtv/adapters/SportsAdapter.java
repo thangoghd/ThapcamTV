@@ -1,4 +1,4 @@
-package com.thangoghd.thapcamtv.widgets;
+package com.thangoghd.thapcamtv.adapters;
 
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -39,15 +39,7 @@ public class SportsAdapter extends RecyclerView.Adapter<SportsAdapter.ViewHolder
         SportType sportType = sportTypes[position];
         holder.sportName.setText(sportType.getVietnameseName());
         holder.sportIcon.setImageResource(sportType.getIconResourceId());
-
-        holder.itemView.setOnFocusChangeListener((v, hasFocus) -> {
-            Log.d("Debug", "Focus changed on position: " + holder.getAdapterPosition() + " hasFocus: " + hasFocus);
-            if (hasFocus) {
-                v.setBackgroundResource(R.drawable.sport_category_focused);
-            } else {
-                v.setBackgroundResource(R.drawable.sport_category_normal);
-            }
-        });
+        Log.d("SportsAdapter", "Focus changed on position: " + holder.getAdapterPosition());
 
         holder.itemView.setOnClickListener(v -> listener.onSportClick(position));
     }

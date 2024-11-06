@@ -1,4 +1,4 @@
-package com.thangoghd.thapcamtv.widgets;
+package com.thangoghd.thapcamtv.adapters;
 
 import android.view.LayoutInflater;
 import android.view.View;
@@ -13,7 +13,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
 import com.thangoghd.thapcamtv.models.Commentator;
-import com.thangoghd.thapcamtv.LiveActivity;
+import com.thangoghd.thapcamtv.LiveFragment;
 import com.thangoghd.thapcamtv.models.Match;
 import com.thangoghd.thapcamtv.R;
 
@@ -26,13 +26,15 @@ import java.util.Locale;
 public class MatchesAdapter extends RecyclerView.Adapter<MatchesAdapter.MatchViewHolder> {
     private List<Match> matches;
     private final OnMatchClickListener matchClickListener;
+    private final LiveFragment fragment;
 
     public interface OnMatchClickListener {
         void onMatchClick(String matchId);
     }
 
-    public MatchesAdapter(List<Match> matches, OnMatchClickListener listener) {
+    public MatchesAdapter(List<Match> matches, LiveFragment fragment, OnMatchClickListener listener) {
         this.matches = (matches != null) ? matches : new ArrayList<>();
+        this.fragment = fragment;
         this.matchClickListener = listener;
     }
 
@@ -59,7 +61,7 @@ public class MatchesAdapter extends RecyclerView.Adapter<MatchesAdapter.MatchVie
     @Override
     public void onBindViewHolder(@NonNull MatchViewHolder holder, int position) {
         Match match = matches.get(position);
-        holder.bind(match);
+        holder.bind(match, fragment);
 
         // Handle onClick event for items in RecyclerView
         holder.itemView.setOnClickListener(v -> {
@@ -76,7 +78,7 @@ public class MatchesAdapter extends RecyclerView.Adapter<MatchesAdapter.MatchVie
         this.matches = newMatches;
         notifyDataSetChanged();
     }
-    static class MatchViewHolder extends RecyclerView.ViewHolder {
+    public static class MatchViewHolder extends RecyclerView.ViewHolder {
         View view;
 
         MatchViewHolder(View itemView) {
@@ -84,7 +86,7 @@ public class MatchesAdapter extends RecyclerView.Adapter<MatchesAdapter.MatchVie
             view = itemView;
         }
 
-        void bind(Match match) {
+        public void bind(Match match, LiveFragment fragment) {
             TextView tournamentNameView = view.findViewById(R.id.tournamentName);
             tournamentNameView.setText(match.getTournament() != null ? match.getTournament().getName() : view.getContext().getString(R.string.unknown_tournament));
 
@@ -187,18 +189,6 @@ public class MatchesAdapter extends RecyclerView.Adapter<MatchesAdapter.MatchVie
             } else {
                 commentatorLayout.setVisibility(View.INVISIBLE);
             }
-
-            view.setOnFocusChangeListener((v, hasFocus) -> {
-                if (hasFocus) {
-                    v.setBackgroundResource(R.drawable.match_background_focused);
-                    ((LiveActivity) v.getContext()).focusedPosition = getAdapterPosition();
-                } else {
-                    v.setBackgroundResource(R.drawable.match_background_normal);
-                    if (((LiveActivity) v.getContext()).focusedPosition == getAdapterPosition()) {
-                        ((LiveActivity) v.getContext()).focusedPosition = RecyclerView.NO_POSITION;
-                    }
-                }
-            });
         }
         private String truncateText(String text) {
             if (text == null) {

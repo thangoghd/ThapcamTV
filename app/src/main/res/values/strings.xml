@@ -34,7 +34,7 @@
     <string name="match_upcoming">Sắp diễn ra</string>
 
     <!--    Menu-->
-    <string name="replay">Xem lại</string>
+    <string name="fullmatch">Xem lại</string>
     <string name="highlight">Xem Highlight</string>
     <string name="live_television">Xem trực tiếp</string>
 

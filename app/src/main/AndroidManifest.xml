@@ -18,7 +18,7 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.ThapcamTV" >
         <activity
-            android:name=".LiveActivity"
+            android:name=".MainActivity"
             android:banner="@drawable/app_icon_thapcamtv"
             android:exported="true"
             android:icon="@drawable/app_icon_thapcamtv"
@@ -30,6 +30,7 @@
                 <category android:name="android.intent.category.LEANBACK_LAUNCHER" />
             </intent-filter>
         </activity>
+        <activity android:name=".LiveActivity"/>
         <activity android:name=".PlayerActivity"
             android:screenOrientation="landscape" />
     </application>

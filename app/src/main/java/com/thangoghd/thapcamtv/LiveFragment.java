@@ -5,11 +5,15 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
-import androidx.appcompat.app.AppCompatActivity;
+import androidx.annotation.Nullable;
+import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -19,15 +23,13 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.thangoghd.thapcamtv.models.Match;
-import com.thangoghd.thapcamtv.widgets.MatchesAdapter;
-import com.thangoghd.thapcamtv.widgets.SportsAdapter;
-
+import com.thangoghd.thapcamtv.adapters.MatchesAdapter;
+import com.thangoghd.thapcamtv.adapters.SportsAdapter;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
 
 import retrofit2.Call;
 import retrofit2.Response;
@@ -38,8 +40,7 @@ import javax.net.ssl.X509TrustManager;
 import javax.net.ssl.HttpsURLConnection;
 import java.security.cert.X509Certificate;
 
-
-public class LiveActivity extends AppCompatActivity {
+public class LiveFragment extends Fragment {
     private RecyclerView recyclerViewSports;
     private RecyclerView recyclerViewMatches;
     private SportRepository sportRepository;
@@ -55,19 +56,18 @@ public class LiveActivity extends AppCompatActivity {
     private Runnable refreshRunnable;
     public int focusedPosition = RecyclerView.NO_POSITION;
 
-
+    @Nullable
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
+    public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
+        View view = inflater.inflate(R.layout.fragment_live, container, false);
 
         allowAllSSL();
 
-        backgroundImageView = findViewById(R.id.backgroundImageView);
-        recyclerViewSports = findViewById(R.id.recyclerViewSports);
-        recyclerViewMatches = findViewById(R.id.recyclerViewMatches);
+        backgroundImageView = view.findViewById(R.id.backgroundImageView);
+        recyclerViewSports = view.findViewById(R.id.recyclerViewSports);
+        recyclerViewMatches = view.findViewById(R.id.recyclerViewMatches);
 
-        SportApi sportApi = ApiManager.getSportApi();
+        SportApi sportApi = ApiManager.getSportApi(false);
         sportRepository = new SportRepository(sportApi);
 
         setupSportsRecyclerView();
@@ -75,11 +75,13 @@ public class LiveActivity extends AppCompatActivity {
         onSportSelected(currentSportIndex);
 
         setupPeriodicRefresh();
+
+        return view; // Trả về view đã tạo
     }
 
     private void setupSportsRecyclerView() {
         recyclerViewSports.setLayoutManager(
-                new LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false)
+                new LinearLayoutManager(getContext(), LinearLayoutManager.HORIZONTAL, false)
         );
 
         // Initialize with an empty array, will be updated after data is available
@@ -101,7 +103,7 @@ public class LiveActivity extends AppCompatActivity {
             changeBackground(selectedSport);
 
             // Update UI
-            runOnUiThread(() -> {
+            requireActivity().runOnUiThread(() -> {
                 // If only one sport element needs to be changed, use notifyItemChanged
                 sportsAdapter.notifyItemChanged(index);
 
@@ -117,16 +119,15 @@ public class LiveActivity extends AppCompatActivity {
         }
     }
 
-
     private void loadMatches(String sportTypeKey) { // Get the key of the selected sport type
         sportRepository.getLiveMatches(new RepositoryCallback<List<Match>>() {
             @Override
             public void onSuccess(List<Match> result) {
+                if (!isAdded()) return;
                 // Get matches by sport type
                 Map<String, List<Match>> matchesBySportType = sportRepository.getMatchesBySportType(result);
                 // Get the list of matches for the selected sport type
                 matches = matchesBySportType.get(sportTypeKey);
-
 
                 // Only update the sports list if it is the first load
                 // or the sports list is currently empty
@@ -142,7 +143,7 @@ public class LiveActivity extends AppCompatActivity {
 
             @Override
             public void onError(Exception e) {
-                Toast.makeText(LiveActivity.this, "Không thể tải dữ liệu của các trận đấu.", Toast.LENGTH_SHORT).show();
+                Toast.makeText(getContext(), "Không thể tải dữ liệu của các trận đấu.", Toast.LENGTH_SHORT).show();
             }
         });
     }
@@ -165,12 +166,12 @@ public class LiveActivity extends AppCompatActivity {
     private void updateMatchesRecyclerView() {
         if (matchesAdapter == null) {
             // Initialize matchesAdapter and pass listener to handle onClick event
-            matchesAdapter = new MatchesAdapter(matches, matchId -> {
+            matchesAdapter = new MatchesAdapter(matches, this, matchId -> {
                 // Call the fetchMatchStreamUrl function when the user clicks on a match
                 fetchMatchStreamUrl(matchId);
             });
             // Set LayoutManager for recyclerViewMatches
-            recyclerViewMatches.setLayoutManager(new GridLayoutManager(this, 3));
+            recyclerViewMatches.setLayoutManager(new GridLayoutManager(getContext(), 3));
             recyclerViewMatches.addItemDecoration(new SpaceItemDecoration(0, 0, 0, 20));
             recyclerViewMatches.setAdapter(matchesAdapter);
         } else {
@@ -178,15 +179,13 @@ public class LiveActivity extends AppCompatActivity {
             matchesAdapter.updateMatches(matches);
         }
 
-        recyclerViewSports.smoothScrollToPosition(currentSportIndex);
-        recyclerViewSports.post(() -> {
-            RecyclerView.ViewHolder viewHolder = recyclerViewSports.findViewHolderForAdapterPosition(currentSportIndex);
-            if (viewHolder != null) {
-                viewHolder.itemView.requestFocus();
+        for (int i = 0; i < matchesAdapter.getItemCount(); i++) {
+            MatchesAdapter.MatchViewHolder holder = (MatchesAdapter.MatchViewHolder) recyclerViewMatches.findViewHolderForAdapterPosition(i);
+            if (holder != null) {
+                holder.bind(matches.get(i), this);
             }
-        });
+        }
     }
-
 
     private void setupPeriodicRefresh() {
         refreshRunnable = new Runnable() {
@@ -201,15 +200,14 @@ public class LiveActivity extends AppCompatActivity {
         };
     }
 
-
     @Override
-    protected void onResume() {
+    public void onResume() {
         super.onResume();
         refreshHandler.post(refreshRunnable);
     }
 
     @Override
-    protected void onPause() {
+    public void onPause() {
         super.onPause();
         refreshHandler.removeCallbacks(refreshRunnable);
     }
@@ -245,7 +243,7 @@ public class LiveActivity extends AppCompatActivity {
                     }
 
                     // Update UI more efficiently
-                    runOnUiThread(() -> {
+                    requireActivity().runOnUiThread(() -> {
                         for (int index : updatedIndices) {
                             matchesAdapter.notifyItemChanged(index);
                         }
@@ -267,37 +265,38 @@ public class LiveActivity extends AppCompatActivity {
 
             @Override
             public void onError(Exception e) {
-                runOnUiThread(() -> {
-                    Toast.makeText(LiveActivity.this, "Không thể lấy dữ liệu của các trận đấu.", Toast.LENGTH_SHORT).show();
+                requireActivity().runOnUiThread(() -> {
+                    Toast.makeText(getContext(), "Không thể lấy dữ liệu của các trận đấu.", Toast.LENGTH_SHORT).show();
                 });
             }
         });
     }
 
     private void fetchMatchStreamUrl(String matchId) {
-        SportApi sportApi = ApiManager.getSportApi();
+        SportApi sportApi = ApiManager.getSportApi(false);
         Call<JsonObject> call = sportApi.getMatchStreamUrl(matchId);
 
         call.enqueue(new retrofit2.Callback<JsonObject>() {
             @Override
             public void onResponse(@NonNull Call<JsonObject> call, @NonNull Response<JsonObject> response) {
+                if (!isAdded()) return;
+
                 if (response.isSuccessful() && response.body() != null) {
                     String jsonResponse = response.body().toString();
                     parseJsonAndStartPlayer(jsonResponse);
                 } else {
                     String errorMessage = "Mã lỗi: " + response.code();
                     Log.e("API_ERROR", errorMessage);
-                    runOnUiThread(() -> Toast.makeText(LiveActivity.this, "Lỗi khi tải luồng phát sóng." + errorMessage, Toast.LENGTH_SHORT).show());
+                    requireActivity().runOnUiThread(() -> Toast.makeText(getContext(), "Lỗi khi tải luồng phát sóng." + errorMessage, Toast.LENGTH_SHORT).show());
                 }
             }
 
             @Override
             public void onFailure(@NonNull Call<JsonObject> call, @NonNull Throwable t) {
-                runOnUiThread(() -> Toast.makeText(LiveActivity.this, "Lỗi khi tải luồng phát sóng.", Toast.LENGTH_SHORT).show());
+                requireActivity().runOnUiThread(() -> Toast.makeText(getContext(), "Lỗi khi tải luồng phát sóng.", Toast.LENGTH_SHORT).show());
             }
         });
     }
-
 
     private void parseJsonAndStartPlayer(String jsonResponse) {
         Gson gson = new Gson();
@@ -305,7 +304,7 @@ public class LiveActivity extends AppCompatActivity {
 
         // Check if "play_urls" is null
         if (jsonObject.getAsJsonObject("data").get("play_urls").isJsonNull()) {
-            runOnUiThread(() -> Toast.makeText(this, "Trận đấu chưa được phát sóng.", Toast.LENGTH_SHORT).show());
+            requireActivity().runOnUiThread(() -> Toast.makeText(getContext(), "Trận đấu chưa được phát sóng.", Toast.LENGTH_SHORT).show());
             return;
         }
 
@@ -322,18 +321,18 @@ public class LiveActivity extends AppCompatActivity {
         if (!qualityMap.isEmpty()) {
             startVideoPlayer(qualityMap);
         } else {
-            runOnUiThread(() -> Toast.makeText(this, "Trận đấu chưa được phát sóng.", Toast.LENGTH_SHORT).show());
+            requireActivity().runOnUiThread(() -> Toast.makeText(getContext(), "Trận đấu chưa được phát sóng.", Toast.LENGTH_SHORT).show());
         }
     }
 
     private void startVideoPlayer(HashMap<String, String> qualityMap) {
-        runOnUiThread(() -> {
-            Intent intent = new Intent(this, PlayerActivity.class);
+        requireActivity().runOnUiThread(() -> {
+            Intent intent = new Intent(getContext(), PlayerActivity.class);
             intent.putExtra("stream_url", qualityMap);
+            intent.putExtra("source_type", "live");
             startActivity(intent);
         });
     }
-
 
     private void allowAllSSL() {
         try {
@@ -353,53 +352,52 @@ public class LiveActivity extends AppCompatActivity {
     }
 
     private void changeBackground(SportType sportType) {
-    int newBackgroundResource = R.drawable.background_other;
+        int newBackgroundResource = R.drawable.background_other;
 
-    switch (sportType) {
-        case ESPORTS:
-            newBackgroundResource = R.drawable.background_esports;
-            break;
-        case BASKETBALL:
-            newBackgroundResource = R.drawable.background_basketball;
-            break;
-        case FOOTBALL:
-            newBackgroundResource = R.drawable.background_football;
-            break;
-        case RACE:
-            newBackgroundResource = R.drawable.background_race;
-            break;
-        case BOXING:
-            newBackgroundResource = R.drawable.background_wwe;
-            break;
-        case VOLLEYBALL:
-            newBackgroundResource = R.drawable.background_volleyball;
-            break;
-        case TENNIS:
-            newBackgroundResource = R.drawable.background_tennis;
-            break;
-        case BADMINTON:
-            newBackgroundResource = R.drawable.background_badminton;
-            break;
-        case BILLIARD:
-            newBackgroundResource = R.drawable.background_pool;
-            break;
-        default:
-            break;
+        switch (sportType) {
+            case ESPORTS:
+                newBackgroundResource = R.drawable.background_esports;
+                break;
+            case BASKETBALL:
+                newBackgroundResource = R.drawable.background_basketball;
+                break;
+            case FOOTBALL:
+                newBackgroundResource = R.drawable.background_football;
+                break;
+            case RACE:
+                newBackgroundResource = R.drawable.background_race;
+                break;
+            case BOXING:
+                newBackgroundResource = R.drawable.background_wwe;
+                break;
+            case VOLLEYBALL:
+                newBackgroundResource = R.drawable.background_volleyball;
+                break;
+            case TENNIS:
+                newBackgroundResource = R.drawable.background_tennis;
+                break;
+            case BADMINTON:
+                newBackgroundResource = R.drawable.background_badminton;
+                break;
+            case BILLIARD:
+                newBackgroundResource = R.drawable.background_pool;
+                break;
+            default:
+                break;
+        }
+
+        final int backgroundResourceToSet = newBackgroundResource;
+
+        backgroundImageView.animate()
+                .alpha(0f)
+                .setDuration(300)
+                .withEndAction(() -> {
+                    backgroundImageView.setImageResource(backgroundResourceToSet);
+                    backgroundImageView.animate()
+                            .alpha(1f)
+                            .setDuration(300)
+                            .start();
+                })
+                .start();
     }
-
-    final int backgroundResourceToSet = newBackgroundResource;
-
-    backgroundImageView.animate()
-            .alpha(0f)
-            .setDuration(300)
-            .withEndAction(() -> {
-                backgroundImageView.setImageResource(backgroundResourceToSet);
-                backgroundImageView.animate()
-                        .alpha(1f)
-                        .setDuration(300)
-                        .start();
-            })
-            .start();
-    }
-
 }

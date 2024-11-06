@@ -43,25 +43,32 @@ public class PlayerActivity extends AppCompatActivity {
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_player);
-
+    
         playerView = findViewById(R.id.player_view);
         qualitySpinner = findViewById(R.id.quality_spinner);
 
+        String videoUrl = getIntent().getStringExtra("replay_url");
+        boolean showQualitySpinner = getIntent().getBooleanExtra("show_quality_spinner", true);
         qualityMap = (HashMap<String, String>) getIntent().getSerializableExtra("stream_url");
-        if (qualityMap == null || qualityMap.isEmpty()) {
-            Toast.makeText(this, "Không có bất cứ luồng phát sóng nào.", Toast.LENGTH_SHORT).show();
-            finish();
-            return;
+        String sourceType = getIntent().getStringExtra("source_type");
+
+        if (sourceType.equals("replay")) {
+            // Xử lý cho highlight hoặc full match
+            if (videoUrl != null && !videoUrl.isEmpty()) {
+                playStream(videoUrl);
+            } else {
+                Toast.makeText(this, "Không có luồng phát sóng nào.", Toast.LENGTH_SHORT).show();
+                finish();
+            }
+        } else if (sourceType.equals("live")) {
+            // Xử lý cho live stream
+            if (qualityMap != null && !qualityMap.isEmpty()) {
+                setupQualitySpinner();
+            } else {
+                Toast.makeText(this, "Không có luồng phát sóng nào.", Toast.LENGTH_SHORT).show();
+                finish();
+            }
         }
-
-        ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_dropdown_item, new ArrayList<>(qualityMap.keySet()));
-        qualitySpinner.setAdapter(adapter);
-
-        String initialQuality = qualityMap.containsKey("FullHD") ? "FullHD" : qualitySpinner.getItemAtPosition(0).toString();
-        int initialPosition = new ArrayList<>(qualityMap.keySet()).indexOf(initialQuality);
-        qualitySpinner.setSelection(initialPosition);
-        playStream(qualityMap.get(initialQuality));
-
 
         qualitySpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
@@ -79,6 +86,16 @@ public class PlayerActivity extends AppCompatActivity {
         });
         resetHideTimer();
     }
+    private void setupQualitySpinner() {
+        qualitySpinner.setVisibility(View.VISIBLE);
+        ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_dropdown_item, new ArrayList<>(qualityMap.keySet()));
+        qualitySpinner.setAdapter(adapter);
+    
+        String initialQuality = qualityMap.containsKey("FullHD") ? "FullHD" : qualitySpinner.getItemAtPosition(0).toString();
+        int initialPosition = new ArrayList<>(qualityMap.keySet()).indexOf(initialQuality);
+        qualitySpinner.setSelection(initialPosition);
+    }
+    
     private void resetHideTimer() {
         qualitySpinner.setVisibility(View.VISIBLE);
         hideHandler.removeCallbacks(hideRunnable);
@@ -101,7 +118,7 @@ public class PlayerActivity extends AppCompatActivity {
         playerView.setPlayer(player);
 
         DefaultHttpDataSource.Factory dataSourceFactory = new DefaultHttpDataSource.Factory();
-        MediaItem mediaItem = MediaItem.fromUri("https://hl.thapcam.link/hls/2light/bro/paok-021124.mp4/playlist.m3u8");
+        MediaItem mediaItem = MediaItem.fromUri(url);
         HlsMediaSource hlsMediaSource = new HlsMediaSource.Factory(dataSourceFactory).createMediaSource(mediaItem);
 
         player.setMediaSource(hlsMediaSource);
@@ -111,8 +128,8 @@ public class PlayerActivity extends AppCompatActivity {
         player.addListener(new Player.Listener() {
             @Override
             public void onPlayerError(PlaybackException error) {
-                Log.e("PlayerActivity", "Playback error: " + error.getMessage() + " | URL: " + url);
-                Toast.makeText(PlayerActivity.this, "Playback error", Toast.LENGTH_SHORT).show();
+                Log.e("PlayerActivity", "Không thể phát video: " + error.getMessage() + " | URL: " + url);
+                Toast.makeText(PlayerActivity.this, "Không thể phát video!", Toast.LENGTH_SHORT).show();
             }
         });
     }

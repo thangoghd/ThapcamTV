@@ -5,6 +5,9 @@
     <color name="search_opaque">#ffaa3f</color>
     <color name="selected_background">#ffaa3f</color>
     <color name="default_background">#3d3d3d</color>
+    <color name="transparent">#00000000</color>
+    <color name="main_color">#FE6F27</color>
+
 
     <!--Match item background-->
     <color name="match_bg_normal">#A63A3D44</color>
@@ -12,5 +15,5 @@
 
     <!--SportType item background-->
     <color name="sport_type_normal">#00FFFFFF</color>
-    <color name="sport_type_focused">#FF5722</color>
+    <color name="sport_type_focused">#FE6F27</color>
 </resources>

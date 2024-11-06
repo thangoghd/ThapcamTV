@@ -9,16 +9,14 @@ import java.security.cert.CertificateException;
 
 public class RetrofitClient {
     private static final String BASE_URL = "https://api.thapcam.xyz/";
-    private static Retrofit retrofit = null;
+    private static final String SECOND_BASE_URL = "https://api.vebo.xyz/";
 
-    public static Retrofit getClient() {
-        if (retrofit == null) {
-            retrofit = new Retrofit.Builder()
-                    .baseUrl(BASE_URL)
-                    .addConverterFactory(GsonConverterFactory.create())
-                    .build();
-        }
-        return retrofit;
+    public static Retrofit getClient(boolean useSecondBaseUrl) {
+        String url = useSecondBaseUrl ? SECOND_BASE_URL : BASE_URL;
+       return new Retrofit.Builder()
+                .baseUrl(url)
+                .addConverterFactory(GsonConverterFactory.create())
+                .build();
     }
     private static OkHttpClient getUnsafeOkHttpClient() {
         try {

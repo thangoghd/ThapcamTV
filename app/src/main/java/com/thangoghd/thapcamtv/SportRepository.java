@@ -4,6 +4,7 @@ import android.util.Log;
 import androidx.annotation.NonNull;
 
 import com.thangoghd.thapcamtv.models.Match;
+import com.thangoghd.thapcamtv.response.MatchResponse;
 
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -30,10 +31,9 @@ public class SportRepository {
     }
 
     public void getLiveMatches(final RepositoryCallback<List<Match>> callback) {
-        Log.d("SportRepository", "Fetching live matches...");
-        api.getLiveMatches().enqueue(new Callback<ApiResponse>() {
+        api.getLiveMatches().enqueue(new Callback<MatchResponse>() {
             @Override
-            public void onResponse(@NonNull Call<ApiResponse> call, @NonNull Response<ApiResponse> response) {
+            public void onResponse(@NonNull Call<MatchResponse> call, @NonNull Response<MatchResponse> response) {
                 if (response.isSuccessful() && response.body() != null) {
                     Log.d("SportRepository", "Received " + response.body().getData().size() + " matches");
                     callback.onSuccess(response.body().getData());
@@ -44,7 +44,7 @@ public class SportRepository {
             }
 
             @Override
-            public void onFailure(@NonNull Call<ApiResponse> call, @NonNull Throwable t) {
+            public void onFailure(@NonNull Call<MatchResponse> call, @NonNull Throwable t) {
                 Log.e("SportRepository", "API call failed", t);
                 callback.onError((Exception) t);
             }
@@ -109,7 +109,6 @@ public class SportRepository {
                 groupedMatches.put(entry.getKey(), entry.getValue());
             }
         }
-    
         return groupedMatches;
     }
 
