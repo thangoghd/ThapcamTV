@@ -53,7 +53,7 @@ public class PlayerActivity extends AppCompatActivity {
         String sourceType = getIntent().getStringExtra("source_type");
 
         if (sourceType.equals("replay")) {
-            // Xử lý cho highlight hoặc full match
+            // Handle replay
             if (videoUrl != null && !videoUrl.isEmpty()) {
                 playStream(videoUrl);
             } else {
@@ -61,7 +61,7 @@ public class PlayerActivity extends AppCompatActivity {
                 finish();
             }
         } else if (sourceType.equals("live")) {
-            // Xử lý cho live stream
+            // Handle live stream
             if (qualityMap != null && !qualityMap.isEmpty()) {
                 setupQualitySpinner();
             } else {

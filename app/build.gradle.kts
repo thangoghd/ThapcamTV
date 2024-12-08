@@ -8,7 +8,7 @@ android {
 
     defaultConfig {
         applicationId = "com.thangoghd.thapcamtv"
-        minSdk = 30
+        minSdk = 29
         targetSdk = 34
         versionCode = 1
         versionName = "1.0"
