@@ -57,7 +57,7 @@ public class SportRepository {
     
         // Group matches by sport type
         for (Match match : matches) {
-            if (!"finished".equalsIgnoreCase(match.getMatch_status()) && !"canceled".equalsIgnoreCase(match.getMatch_status()) && match.getTournament().getPriority() != -1) {
+            if (!"finished".equalsIgnoreCase(match.getMatch_status()) && !"canceled".equalsIgnoreCase(match.getMatch_status())) {
                 tempGroupedMatches.computeIfAbsent(match.getSport_type(), k -> new ArrayList<>()).add(match);
             }
         }

@@ -65,7 +65,7 @@
             android:id="@+id/firstPage"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:drawableStart="@drawable/lb_ic_fast_rewind"
+            android:drawableStart="@drawable/ic_firstpage"
             android:paddingStart="30dp" />
 
         <Button
@@ -105,7 +105,7 @@
             android:id="@+id/lastPage"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:drawableStart="@drawable/lb_ic_fast_forward"
+            android:drawableStart="@drawable/ic_lastpage"
             android:paddingStart="30dp" />
 
         <EditText
