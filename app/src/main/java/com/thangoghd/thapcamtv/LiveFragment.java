@@ -336,10 +336,6 @@ public class LiveFragment extends Fragment {
                 if (response.isSuccessful() && response.body() != null) {
                     String jsonResponse = response.body().toString();
                     parseJsonAndStartPlayer(jsonResponse, true); // true indicates this is a background load
-                } else {
-                    String errorMessage = "Mã lỗi: " + response.code();
-                    Log.e("API_ERROR", errorMessage);
-                    // No need to show toast as PlayerActivity will handle the error
                 }
             }
 

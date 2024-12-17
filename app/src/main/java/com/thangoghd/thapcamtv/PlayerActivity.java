@@ -36,7 +36,6 @@ public class PlayerActivity extends AppCompatActivity {
     private PlayerView playerView;
     private Map<String, String> qualityMap;
     private Spinner qualitySpinner;
-    private String currentMatchId;
     private ProgressBar loadingProgressBar;
 
     private Handler hideHandler = new Handler(Looper.getMainLooper());
@@ -64,8 +63,6 @@ public class PlayerActivity extends AppCompatActivity {
         String videoUrl = getIntent().getStringExtra("replay_url");
         String sourceType = getIntent().getStringExtra("source_type");
         boolean isLoading = getIntent().getBooleanExtra("is_loading", false);
-        currentMatchId = getIntent().getStringExtra("match_id");
-        
         if (isLoading) {
             showLoading(true);
         } else {
