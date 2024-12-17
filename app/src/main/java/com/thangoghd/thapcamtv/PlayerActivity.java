@@ -158,4 +158,28 @@ public class PlayerActivity extends AppCompatActivity {
             player = null;
         }
     }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        if (player != null) {
+            player.setPlayWhenReady(false);
+        }
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        if (player != null) {
+            player.setPlayWhenReady(true);
+        }
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        if (player != null) {
+            player.setPlayWhenReady(false);
+        }
+    }
 }

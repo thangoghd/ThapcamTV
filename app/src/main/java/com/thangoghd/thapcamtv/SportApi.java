@@ -17,13 +17,13 @@ public interface SportApi {
     Call<JsonObject> getMatchStreamUrl(@Path("matchId") String matchId);
 
     @GET("api/news/vebotv/list/{link}/{page}")
-    Call<ReplayResponse> getHighlights(@Path("link") String link, @Path("page") int page);
+    Call<ReplayResponse> getReplays(@Path("link") String link, @Path("page") int page);
 
     @GET("api/news/vebotv/detail/{id}")
-    Call<ReplayLinkResponse> getHighlightDetails(@Path("id") String id);
+    Call<ReplayLinkResponse> getReplayDetails(@Path("id") String id);
 
     @GET("api/news/vebotv/search/{link}/{query}")
-    Call<ReplayResponse> searchHighlights(@Path("link") String link, @Path("query") String query);
+    Call<ReplayResponse> searchReplays(@Path("link") String link, @Path("query") String query);
 }
 
 

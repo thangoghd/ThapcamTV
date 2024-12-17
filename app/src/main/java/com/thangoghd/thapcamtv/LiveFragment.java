@@ -50,11 +50,14 @@ public class LiveFragment extends Fragment {
     private SportType[] availableSportTypes;
     private int currentSportIndex = 0;
     private boolean isInitialLoad = true; // Add a variable to track the first load
+    private boolean isLoading = false; // Add this variable to track loading state
     private ImageView backgroundImageView;
     private final Handler refreshHandler = new Handler(Looper.getMainLooper());
     private final long REFRESH_INTERVAL = 30000; // 30 seconds
     private Runnable refreshRunnable;
     public int focusedPosition = RecyclerView.NO_POSITION;
+    private Map<String, List<Match>> matchesCache = new HashMap<>(); // Add cache for matches
+    private View loadingView; // Add loading view reference
 
     @Nullable
     @Override
@@ -66,6 +69,7 @@ public class LiveFragment extends Fragment {
         backgroundImageView = view.findViewById(R.id.backgroundImageView);
         recyclerViewSports = view.findViewById(R.id.recyclerViewSports);
         recyclerViewMatches = view.findViewById(R.id.recyclerViewMatches);
+        loadingView = view.findViewById(R.id.loadingView); // Initialize loading view
 
         SportApi sportApi = ApiManager.getSportApi(false);
         sportRepository = new SportRepository(sportApi);
@@ -91,7 +95,7 @@ public class LiveFragment extends Fragment {
     }
 
     private void onSportSelected(int index) {
-        if (availableSportTypes != null && index >= 0 && index < availableSportTypes.length) {
+        if (availableSportTypes != null && index >= 0 && index < availableSportTypes.length && !isLoading) {
             currentSportIndex = index;
             SportType selectedSport = availableSportTypes[index];
 
@@ -119,31 +123,61 @@ public class LiveFragment extends Fragment {
         }
     }
 
-    private void loadMatches(String sportTypeKey) { // Get the key of the selected sport type
+    private void loadMatches(String sportTypeKey) {
+        // Check cache first
+        if (matchesCache.containsKey(sportTypeKey)) {
+            List<Match> cachedMatches = matchesCache.get(sportTypeKey);
+            matches = cachedMatches;
+            updateMatchesRecyclerView();
+            // Load fresh data in background
+            loadMatchesFromNetwork(sportTypeKey, false);
+            return;
+        }
+
+        // No cache, load from network with loading indicator
+        loadMatchesFromNetwork(sportTypeKey, true);
+    }
+
+    private void loadMatchesFromNetwork(String sportTypeKey, boolean showLoadingIndicator) {
+        isLoading = true;
+        if (showLoadingIndicator) {
+            showLoading(true);
+        }
+
         sportRepository.getLiveMatches(new RepositoryCallback<List<Match>>() {
             @Override
             public void onSuccess(List<Match> result) {
-                if (!isAdded()) return;
-                // Get matches by sport type
-                Map<String, List<Match>> matchesBySportType = sportRepository.getMatchesBySportType(result);
-                // Get the list of matches for the selected sport type
-                matches = matchesBySportType.get(sportTypeKey);
+                if (!isAdded()) {
+                    isLoading = false;
+                    showLoading(false);
+                    return;
+                }
 
-                // Only update the sports list if it is the first load
-                // or the sports list is currently empty
+                Map<String, List<Match>> matchesBySportType = sportRepository.getMatchesBySportType(result);
+                matches = matchesBySportType.get(sportTypeKey);
+                
+                // Update cache
+                matchesCache.clear(); // Clear old cache
+                matchesCache.putAll(matchesBySportType);
+
                 if (isInitialLoad || availableSportTypes.length == 0) {
                     updateSportsAdapter(matchesBySportType);
                 }
 
-                // Update adapter for sports categories
                 updateSportsAdapter(matchesBySportType);
-                // Update RecyclerView with matches
                 updateMatchesRecyclerView();
+                
+                isLoading = false;
+                showLoading(false);
             }
 
             @Override
             public void onError(Exception e) {
-                Toast.makeText(getContext(), "Không thể tải dữ liệu của các trận đấu.", Toast.LENGTH_SHORT).show();
+                isLoading = false;
+                showLoading(false);
+                if (getContext() != null) {
+                    Toast.makeText(getContext(), "Không thể tải dữ liệu của các trận đấu.", Toast.LENGTH_SHORT).show();
+                }
             }
         });
     }
@@ -427,5 +461,12 @@ public class LiveFragment extends Fragment {
                             .start();
                 })
                 .start();
+    }
+
+    private void showLoading(boolean show) {
+        if (loadingView != null) {
+            loadingView.setVisibility(show ? View.VISIBLE : View.GONE);
+            recyclerViewMatches.setVisibility(show ? View.GONE : View.VISIBLE);
+        }
     }
 }

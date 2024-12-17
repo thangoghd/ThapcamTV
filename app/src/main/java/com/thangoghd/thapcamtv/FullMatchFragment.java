@@ -2,7 +2,6 @@ package com.thangoghd.thapcamtv;
 
 import android.content.Intent;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -38,7 +37,7 @@ public class FullMatchFragment extends BaseFragment {
     }
 
     private void fetchHighlightDetails(String id) {
-        ApiManager.getSportApi(true).getHighlightDetails(id).enqueue(new Callback<ReplayLinkResponse>() {
+        ApiManager.getSportApi(true).getReplayDetails(id).enqueue(new Callback<ReplayLinkResponse>() {
             @Override
             public void onResponse(Call<ReplayLinkResponse> call, Response<ReplayLinkResponse> response) {
                 if (response.isSuccessful() && response.body() != null) {

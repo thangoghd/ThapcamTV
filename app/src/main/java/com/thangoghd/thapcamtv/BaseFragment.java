@@ -2,7 +2,6 @@ package com.thangoghd.thapcamtv;
 
 import android.content.Context;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -84,7 +83,7 @@ public abstract class BaseFragment extends Fragment implements ReplayAdapter.OnH
     }
 
     protected void searchHighlights(String query) {
-        ApiManager.getSportApi(true).searchHighlights(getLink(), query).enqueue(new Callback<ReplayResponse>() {
+        ApiManager.getSportApi(true).searchReplays(getLink(), query).enqueue(new Callback<ReplayResponse>() {
             @Override
             public void onResponse(Call<ReplayResponse> call, Response<ReplayResponse> response) {
                 if (response.isSuccessful() && response.body() != null) {
@@ -106,10 +105,21 @@ public abstract class BaseFragment extends Fragment implements ReplayAdapter.OnH
     }
 
     protected void fetchHighlights(int page, View view) {
-        ApiManager.getSportApi(true).getHighlights(getLink(), page).enqueue(new Callback<ReplayResponse>() {
+        // Check cache
+        ReplayResponse cachedResponse = ReplayCache.getList(getLink(), page);
+        if (cachedResponse != null) {
+            replayAdapter = new ReplayAdapter(cachedResponse.getData().getList(), this);
+            recyclerView.setAdapter(replayAdapter);
+            maxPages = (int) Math.ceil((double) cachedResponse.getData().getTotal() / cachedResponse.getData().getLimit());
+            updatePaginationViews(view);
+            return;
+        }
+        // If not cached, fetch
+        ApiManager.getSportApi(true).getReplays(getLink(), page).enqueue(new Callback<ReplayResponse>() {
             @Override
             public void onResponse(Call<ReplayResponse> call, Response<ReplayResponse> response) {
                 if (response.isSuccessful() && response.body() != null) {
+                    ReplayCache.putList(getLink(), page, response.body());
                     replayAdapter = new ReplayAdapter(response.body().getData().getList(), BaseFragment.this);
                     recyclerView.setAdapter(replayAdapter);
                     maxPages = (int) Math.ceil((double) response.body().getData().getTotal() / response.body().getData().getLimit());
