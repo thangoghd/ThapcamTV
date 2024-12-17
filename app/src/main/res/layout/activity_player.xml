@@ -21,4 +21,11 @@
             android:layout_marginBottom="32dp" />
     </com.google.android.exoplayer2.ui.PlayerView>
 
+    <ProgressBar
+        android:id="@+id/loading_progress"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:visibility="gone"/>
+
 </FrameLayout>

@@ -1,5 +1,8 @@
 package com.thangoghd.thapcamtv;
 
+import android.content.BroadcastReceiver;
+import android.content.Context;
+import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -8,6 +11,7 @@ import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ImageButton;
+import android.widget.ProgressBar;
 import android.widget.Spinner;
 import android.widget.Toast;
 import androidx.annotation.Nullable;
@@ -26,10 +30,14 @@ import java.util.Map;
 
 public class PlayerActivity extends AppCompatActivity {
 
+    public static final String ACTION_STREAM_READY = "com.thangoghd.thapcamtv.STREAM_READY";
+    private static PlayerActivity instance;
     private ExoPlayer player;
     private PlayerView playerView;
     private Map<String, String> qualityMap;
     private Spinner qualitySpinner;
+    private String currentMatchId;
+    private ProgressBar loadingProgressBar;
 
     private Handler hideHandler = new Handler(Looper.getMainLooper());
     private Runnable hideRunnable = new Runnable() {
@@ -39,53 +47,78 @@ public class PlayerActivity extends AppCompatActivity {
         }
     };
 
+    public static PlayerActivity getInstance() {
+        return instance;
+    }
+
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        instance = this;
         setContentView(R.layout.activity_player);
     
         playerView = findViewById(R.id.player_view);
         qualitySpinner = findViewById(R.id.quality_spinner);
+        loadingProgressBar = findViewById(R.id.loading_progress);
 
         String videoUrl = getIntent().getStringExtra("replay_url");
-        boolean showQualitySpinner = getIntent().getBooleanExtra("show_quality_spinner", true);
-        qualityMap = (HashMap<String, String>) getIntent().getSerializableExtra("stream_url");
         String sourceType = getIntent().getStringExtra("source_type");
-
-        if (sourceType.equals("replay")) {
-            // Handle replay
-            if (videoUrl != null && !videoUrl.isEmpty()) {
-                playStream(videoUrl);
-            } else {
-                Toast.makeText(this, "Không có luồng phát sóng nào.", Toast.LENGTH_SHORT).show();
-                finish();
-            }
-        } else if (sourceType.equals("live")) {
-            // Handle live stream
-            if (qualityMap != null && !qualityMap.isEmpty()) {
-                setupQualitySpinner();
-            } else {
-                Toast.makeText(this, "Không có luồng phát sóng nào.", Toast.LENGTH_SHORT).show();
-                finish();
-            }
+        boolean isLoading = getIntent().getBooleanExtra("is_loading", false);
+        currentMatchId = getIntent().getStringExtra("match_id");
+        
+        if (isLoading) {
+            showLoading(true);
+        } else {
+            handleVideoSource(sourceType, videoUrl);
         }
 
         qualitySpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
-            public void onItemSelected(AdapterView<?> adapterView, View view, int position, long id) {
-                String selectedQuality = adapterView.getItemAtPosition(position).toString();
-                String url = qualityMap.get(selectedQuality);
-                playStream(url);
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                String quality = parent.getItemAtPosition(position).toString();
+                String streamUrl = qualityMap.get(quality);
+                if (streamUrl != null) {
+                    playStream(streamUrl);
+                }
                 resetHideTimer();
             }
 
             @Override
-            public void onNothingSelected(AdapterView<?> adapterView) {
+            public void onNothingSelected(AdapterView<?> parent) {
                 // Nothing to do
             }
         });
         resetHideTimer();
     }
+
+    public void onStreamUrlReceived(HashMap<String, String> streamUrls) {
+        runOnUiThread(() -> {
+            showLoading(false);
+            if (streamUrls != null && !streamUrls.isEmpty()) {
+                this.qualityMap = streamUrls;
+                setupQualitySpinner();
+            } else {
+                showError("Không có luồng phát sóng.");
+            }
+        });
+    }
+
+    private void handleVideoSource(String sourceType, String videoUrl) {
+        if ("replay".equals(sourceType)) {
+            if (videoUrl != null && !videoUrl.isEmpty()) {
+                playStream(videoUrl);
+            } else {
+                showError("Không có luồng phát sóng.");
+            }
+        } else if ("live".equals(sourceType)) {
+            if (qualityMap != null && !qualityMap.isEmpty()) {
+                setupQualitySpinner();
+            } else {
+                showError("Không có luồng phát sóng.");
+            }
+        }
+    }
+
     private void setupQualitySpinner() {
         qualitySpinner.setVisibility(View.VISIBLE);
         ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_dropdown_item, new ArrayList<>(qualityMap.keySet()));
@@ -107,7 +140,6 @@ public class PlayerActivity extends AppCompatActivity {
         super.onUserInteraction();
         resetHideTimer();
     }
-
 
     private void playStream(String url) {
         if (player != null) {
@@ -150,12 +182,26 @@ public class PlayerActivity extends AppCompatActivity {
             }
         });
     }
+
+    private void showLoading(boolean show) {
+        if (loadingProgressBar != null) {
+            loadingProgressBar.setVisibility(show ? View.VISIBLE : View.GONE);
+        }
+        if (playerView != null) {
+            playerView.setVisibility(show ? View.GONE : View.VISIBLE);
+        }
+    }
+
+    private void showError(String message) {
+        Toast.makeText(this, message, Toast.LENGTH_SHORT).show();
+        finish();
+    }
+
     @Override
     protected void onDestroy() {
         super.onDestroy();
         if (player != null) {
             player.release();
-            player = null;
         }
     }
 

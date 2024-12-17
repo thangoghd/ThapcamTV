@@ -50,7 +50,6 @@ public class LiveFragment extends Fragment {
     private SportType[] availableSportTypes;
     private int currentSportIndex = 0;
     private boolean isInitialLoad = true; // Add a variable to track the first load
-    private boolean isLoading = false; // Add this variable to track loading state
     private ImageView backgroundImageView;
     private final Handler refreshHandler = new Handler(Looper.getMainLooper());
     private final long REFRESH_INTERVAL = 30000; // 30 seconds
@@ -95,7 +94,7 @@ public class LiveFragment extends Fragment {
     }
 
     private void onSportSelected(int index) {
-        if (availableSportTypes != null && index >= 0 && index < availableSportTypes.length && !isLoading) {
+        if (availableSportTypes != null && index >= 0 && index < availableSportTypes.length) {
             currentSportIndex = index;
             SportType selectedSport = availableSportTypes[index];
 
@@ -124,22 +123,10 @@ public class LiveFragment extends Fragment {
     }
 
     private void loadMatches(String sportTypeKey) {
-        // Check cache first
-        if (matchesCache.containsKey(sportTypeKey)) {
-            List<Match> cachedMatches = matchesCache.get(sportTypeKey);
-            matches = cachedMatches;
-            updateMatchesRecyclerView();
-            // Load fresh data in background
-            loadMatchesFromNetwork(sportTypeKey, false);
-            return;
-        }
-
-        // No cache, load from network with loading indicator
         loadMatchesFromNetwork(sportTypeKey, true);
     }
 
     private void loadMatchesFromNetwork(String sportTypeKey, boolean showLoadingIndicator) {
-        isLoading = true;
         if (showLoadingIndicator) {
             showLoading(true);
         }
@@ -148,16 +135,13 @@ public class LiveFragment extends Fragment {
             @Override
             public void onSuccess(List<Match> result) {
                 if (!isAdded()) {
-                    isLoading = false;
                     showLoading(false);
                     return;
                 }
 
                 Map<String, List<Match>> matchesBySportType = sportRepository.getMatchesBySportType(result);
                 matches = matchesBySportType.get(sportTypeKey);
-                
-                // Update cache
-                matchesCache.clear(); // Clear old cache
+
                 matchesCache.putAll(matchesBySportType);
 
                 if (isInitialLoad || availableSportTypes.length == 0) {
@@ -166,14 +150,12 @@ public class LiveFragment extends Fragment {
 
                 updateSportsAdapter(matchesBySportType);
                 updateMatchesRecyclerView();
-                
-                isLoading = false;
+
                 showLoading(false);
             }
 
             @Override
             public void onError(Exception e) {
-                isLoading = false;
                 showLoading(false);
                 if (getContext() != null) {
                     Toast.makeText(getContext(), "Không thể tải dữ liệu của các trận đấu.", Toast.LENGTH_SHORT).show();
@@ -335,6 +317,14 @@ public class LiveFragment extends Fragment {
     }
 
     private void fetchMatchStreamUrl(String matchId) {
+        // Start PlayerActivity immediately with loading state
+        Intent intent = new Intent(getContext(), PlayerActivity.class);
+        intent.putExtra("source_type", "live");
+        intent.putExtra("is_loading", true);
+        intent.putExtra("match_id", matchId);
+        startActivity(intent);
+
+        // Fetch stream URL in background
         SportApi sportApi = ApiManager.getSportApi(false);
         Call<JsonObject> call = sportApi.getMatchStreamUrl(matchId);
 
@@ -345,28 +335,30 @@ public class LiveFragment extends Fragment {
 
                 if (response.isSuccessful() && response.body() != null) {
                     String jsonResponse = response.body().toString();
-                    parseJsonAndStartPlayer(jsonResponse);
+                    parseJsonAndStartPlayer(jsonResponse, true); // true indicates this is a background load
                 } else {
                     String errorMessage = "Mã lỗi: " + response.code();
                     Log.e("API_ERROR", errorMessage);
-                    requireActivity().runOnUiThread(() -> Toast.makeText(getContext(), "Lỗi khi tải luồng phát sóng." + errorMessage, Toast.LENGTH_SHORT).show());
+                    // No need to show toast as PlayerActivity will handle the error
                 }
             }
 
             @Override
             public void onFailure(@NonNull Call<JsonObject> call, @NonNull Throwable t) {
-                requireActivity().runOnUiThread(() -> Toast.makeText(getContext(), "Lỗi khi tải luồng phát sóng.", Toast.LENGTH_SHORT).show());
+                // No need to show toast as PlayerActivity will handle the error
             }
         });
     }
 
-    private void parseJsonAndStartPlayer(String jsonResponse) {
+    private void parseJsonAndStartPlayer(String jsonResponse, boolean isBackgroundLoad) {
         Gson gson = new Gson();
         JsonObject jsonObject = gson.fromJson(jsonResponse, JsonObject.class);
 
         // Check if "play_urls" is null
         if (jsonObject.getAsJsonObject("data").get("play_urls").isJsonNull()) {
-            requireActivity().runOnUiThread(() -> Toast.makeText(getContext(), "Trận đấu chưa được phát sóng.", Toast.LENGTH_SHORT).show());
+            if (!isBackgroundLoad) {
+                requireActivity().runOnUiThread(() -> Toast.makeText(getContext(), "Trận đấu chưa được phát sóng.", Toast.LENGTH_SHORT).show());
+            }
             return;
         }
 
@@ -381,9 +373,22 @@ public class LiveFragment extends Fragment {
         }
 
         if (!qualityMap.isEmpty()) {
-            startVideoPlayer(qualityMap);
+            if (isBackgroundLoad) {
+                sendStreamUrlToPlayer(qualityMap);
+            } else {
+                startVideoPlayer(qualityMap);
+            }
         } else {
-            requireActivity().runOnUiThread(() -> Toast.makeText(getContext(), "Trận đấu chưa được phát sóng.", Toast.LENGTH_SHORT).show());
+            if (!isBackgroundLoad) {
+                requireActivity().runOnUiThread(() -> Toast.makeText(getContext(), "Trận đấu chưa được phát sóng.", Toast.LENGTH_SHORT).show());
+            }
+        }
+    }
+
+    private void sendStreamUrlToPlayer(HashMap<String, String> qualityMap) {
+        PlayerActivity playerActivity = PlayerActivity.getInstance();
+        if (playerActivity != null) {
+            playerActivity.onStreamUrlReceived(qualityMap);
         }
     }
 
