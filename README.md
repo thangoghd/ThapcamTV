@@ -6,7 +6,7 @@
 
 ## 📱 Giới thiệu
 
-ThapCamTV là ứng dụng Android cho phép bạn xem trực tiếp các sự kiện thể thao từ khắp nơi trên thế giới với chất lượng cao và hoàn toàn miễn phí.
+ThapCamTV là ứng dụng Android TV cho phép bạn xem trực tiếp các sự kiện thể thao từ khắp nơi trên thế giới với chất lượng cao và hoàn toàn miễn phí.
 
 ## ⭐ Tính năng chính
 
