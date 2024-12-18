@@ -141,15 +141,6 @@
             android:orientation="horizontal"
             android:visibility="visible">
 
-            <ImageView
-                android:id="@+id/commentatorIcon"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginEnd="2dp"
-                android:contentDescription="@null"
-                android:scaleType="fitStart"
-                android:visibility="visible" />
-
             <TextView
                 android:id="@+id/commentatorName"
                 android:layout_width="wrap_content"

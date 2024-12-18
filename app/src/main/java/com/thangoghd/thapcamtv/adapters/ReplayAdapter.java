@@ -24,8 +24,6 @@ public class ReplayAdapter extends RecyclerView.Adapter<ReplayAdapter.HighlightV
         this.listener = listener;
     }
 
-
-
     @NonNull
     @Override
     public HighlightViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
@@ -40,7 +38,11 @@ public class ReplayAdapter extends RecyclerView.Adapter<ReplayAdapter.HighlightV
         Glide.with(holder.image.getContext())
                 .load(replay.getFeatureImage())
                 .into(holder.image);
-                
+
+        // Improve focus handling for Android TV
+        holder.itemView.setFocusable(true);
+        holder.itemView.setFocusableInTouchMode(true);
+
         holder.itemView.setOnClickListener(v -> {
             if (listener != null) {
                 listener.onHighlightClick(replay.getId());

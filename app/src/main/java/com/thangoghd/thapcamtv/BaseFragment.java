@@ -38,7 +38,28 @@ public abstract class BaseFragment extends Fragment implements ReplayAdapter.OnH
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_replay, container, false);
         recyclerView = view.findViewById(R.id.recyclerView);
-        recyclerView.setLayoutManager(new GridLayoutManager(getContext(), 3));
+        GridLayoutManager layoutManager = new GridLayoutManager(getContext(), 3);
+        recyclerView.setLayoutManager(layoutManager);
+
+        recyclerView.setFocusable(true);
+        recyclerView.setFocusableInTouchMode(true);
+        recyclerView.requestFocus();
+
+        // Add scroll listener to handle focus
+        recyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
+            @Override
+            public void onScrollStateChanged(@NonNull RecyclerView recyclerView, int newState) {
+                super.onScrollStateChanged(recyclerView, newState);
+                if (newState == RecyclerView.SCROLL_STATE_IDLE) {
+                    if (recyclerView.getLayoutManager() != null && recyclerView.getLayoutManager().getFocusedChild() == null) {
+                        View firstChild = recyclerView.getLayoutManager().getChildAt(0);
+                        if (firstChild != null) {
+                            firstChild.requestFocus();
+                        }
+                    }
+                }
+            }
+        });
 
         setupPaginationButtons(view);
         setupSearchButton(view);
@@ -161,10 +182,15 @@ public abstract class BaseFragment extends Fragment implements ReplayAdapter.OnH
     }
 
     private void hideKeyboard() {
-        View view = getActivity().getCurrentFocus();
-        if (view != null) {
-            InputMethodManager imm = (InputMethodManager) getActivity().getSystemService(Context.INPUT_METHOD_SERVICE);
-            imm.hideSoftInputFromWindow(view.getWindowToken(), 0);
+        try {
+            if (getActivity() != null && getActivity().getCurrentFocus() != null) {
+                InputMethodManager imm = (InputMethodManager) getActivity().getSystemService(Context.INPUT_METHOD_SERVICE);
+                if (imm != null) {
+                    imm.hideSoftInputFromWindow(getActivity().getCurrentFocus().getWindowToken(), 0);
+                }
+            }
+        } catch (Exception e) {
+            // Handle any potential exceptions on older Android versions
         }
     }
 

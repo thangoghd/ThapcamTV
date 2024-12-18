@@ -163,28 +163,27 @@ public class MatchesAdapter extends RecyclerView.Adapter<MatchesAdapter.MatchVie
 
             // Set commentator info
             LinearLayout commentatorLayout = view.findViewById(R.id.commentatorLayout);
+            TextView commentatorName = view.findViewById(R.id.commentatorName);
             List<Commentator> commentators = match.getCommentators();
+            
             if (commentators != null && !commentators.isEmpty()) {
                 commentatorLayout.setVisibility(View.VISIBLE);
-                commentatorLayout.removeAllViews(); // Clear existing views
-
-                for (Commentator commentator : commentators) {
-                    View commentatorView = LayoutInflater.from(view.getContext()).inflate(R.layout.item_commentator, commentatorLayout, false);
-
-                    ImageView avatarView = commentatorView.findViewById(R.id.commentatorIcon);
-                    TextView nameView = commentatorView.findViewById(R.id.commentatorName);
-
-                if (commentator.getAvatar() != null && !commentator.getAvatar().isEmpty()) {
-                    Glide.with(view.getContext())
-                            .load(commentator.getAvatar())
-                            .circleCrop()
-                            .into(avatarView);
+                
+                StringBuilder names = new StringBuilder("🎙 "); // Add microphone icon at the start
+                
+                if (commentators.size() > 1) {
+                    // Join commentator names with " - "
+                    for (int i = 0; i < commentators.size(); i++) {
+                        names.append(commentators.get(i).getName());
+                        if (i < commentators.size() - 1) {
+                            names.append(" - ");
+                        }
+                    }
+                    commentatorName.setText(names.toString());
                 } else {
-                    avatarView.setImageResource(R.drawable.default_avatar);
-                }
-
-                    nameView.setText(commentator.getName());
-                    commentatorLayout.addView(commentatorView);
+                    // Single commentator
+                    names.append(commentators.get(0).getName());
+                    commentatorName.setText(names.toString());
                 }
             } else {
                 commentatorLayout.setVisibility(View.INVISIBLE);
