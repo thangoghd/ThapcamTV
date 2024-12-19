@@ -10,11 +10,14 @@ import retrofit2.http.GET;
 import retrofit2.http.Path;
 
 public interface SportApi {
-    @GET("api/match/tc/live")
+    @GET("api/match/featured")
     Call<MatchResponse> getLiveMatches();
 
     @GET("api/match/tc/{matchId}/no/meta")
-    Call<JsonObject> getMatchStreamUrl(@Path("matchId") String matchId);
+    Call<JsonObject> getThapcamStreamUrl(@Path("matchId") String matchId);
+
+    @GET("api/match/{matchId}/meta")
+    Call<JsonObject> getVeboStreamUrl(@Path("matchId") String matchId);
 
     @GET("api/news/vebotv/list/{link}/{page}")
     Call<ReplayResponse> getReplays(@Path("link") String link, @Path("page") int page);

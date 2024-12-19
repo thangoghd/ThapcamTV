@@ -1,8 +1,10 @@
-package com.thangoghd.thapcamtv;
+package com.thangoghd.thapcamtv.repositories;
 import android.util.Log;
 
 import androidx.annotation.NonNull;
 
+import com.thangoghd.thapcamtv.ApiManager;
+import com.thangoghd.thapcamtv.SportApi;
 import com.thangoghd.thapcamtv.models.Match;
 import com.thangoghd.thapcamtv.response.MatchResponse;
 
@@ -12,13 +14,11 @@ import retrofit2.Response;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
-import java.util.stream.Collectors;
+
 
 public class SportRepository {
     private final SportApi api;
@@ -26,8 +26,13 @@ public class SportRepository {
         "football", "basketball", "esports", "tennis", "volleyball", "badminton", "race", "pool", "wwe", "event"
     );
 
+
     public SportRepository(SportApi api) {
         this.api = api;
+    }
+
+    public boolean isUsingVeboApi() {
+        return api == ApiManager.getSportApi(true);
     }
 
     public void getLiveMatches(final RepositoryCallback<List<Match>> callback) {
@@ -57,24 +62,15 @@ public class SportRepository {
     
         // Group matches by sport type
         for (Match match : matches) {
-            if (!"finished".equalsIgnoreCase(match.getMatch_status()) && !"canceled".equalsIgnoreCase(match.getMatch_status()) && match.getTournament().getPriority() != -1) {
+            if (!"finished".equalsIgnoreCase(match.getMatch_status()) && 
+                !"canceled".equalsIgnoreCase(match.getMatch_status())) {
                 tempGroupedMatches.computeIfAbsent(match.getSport_type(), k -> new ArrayList<>()).add(match);
             }
         }
 
-        calculateTopTwoPriorities(matches);
-
         // Sort matches by criteria
         for (List<Match> sportMatches : tempGroupedMatches.values()) {
             sportMatches.sort((m1, m2) -> {
-                int priority1 = m1.getTournament().getPriority();
-                int priority2 = m2.getTournament().getPriority();
-
-                // Compare by top 2 priority
-                if (isTopTwoPriority(priority1) != isTopTwoPriority(priority2)) {
-                    return isTopTwoPriority(priority2) ? 1 : -1;
-                }
-
                 // Compare by broadcast status
                 if (m1.getLive() != m2.getLive()) {
                     return m2.getLive() ? 1 : -1;
@@ -91,12 +87,11 @@ public class SportRepository {
                 }
 
                 // Compare by priority
-                return Integer.compare(priority2, priority1);
+                return Integer.compare(m2.getTournament().getPriority(), m1.getTournament().getPriority());
             });
         }
 
-    
-        // Add sorted matches to the final map
+        // Add sorted matches to the final map based on SPORT_PRIORITY
         for (String sport : SPORT_PRIORITY) {
             if (tempGroupedMatches.containsKey(sport)) {
                 groupedMatches.put(sport, tempGroupedMatches.get(sport));
@@ -111,25 +106,4 @@ public class SportRepository {
         }
         return groupedMatches;
     }
-
-    // This code is used to calculate and check the top two priorities in a list of matches
-    private Set<Integer> topTwoPriorities;
-
-    private void calculateTopTwoPriorities(List<Match> matches) {
-        topTwoPriorities = matches.stream()
-                .map(match -> match.getTournament().getPriority())
-                .distinct()
-                .sorted(Collections.reverseOrder())
-                .limit(2)
-                .collect(Collectors.toSet());
-    }
-
-    private boolean isTopTwoPriority(int priority) {
-        return topTwoPriorities.contains(priority);
-    }
-}
-
-interface RepositoryCallback<T> {
-    void onSuccess(T result);
-    void onError(Exception e);
 }

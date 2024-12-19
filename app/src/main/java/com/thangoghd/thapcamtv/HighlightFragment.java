@@ -48,7 +48,7 @@ public class HighlightFragment extends BaseFragment {
                     intent.putExtra("source_type", "replay");
                     startActivity(intent);
                 } else {
-                    Toast.makeText(getContext(), "Failed to load highlight details", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(getContext(), "Không thể lấy được luồng video", Toast.LENGTH_SHORT).show();
                 }
             }
 

@@ -22,14 +22,18 @@ import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
-import com.thangoghd.thapcamtv.models.Match;
 import com.thangoghd.thapcamtv.adapters.MatchesAdapter;
 import com.thangoghd.thapcamtv.adapters.SportsAdapter;
+import com.thangoghd.thapcamtv.models.Match;
+import com.thangoghd.thapcamtv.repositories.RepositoryCallback;
+import com.thangoghd.thapcamtv.repositories.SportRepository;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import retrofit2.Call;
 import retrofit2.Response;
@@ -70,7 +74,8 @@ public class LiveFragment extends Fragment {
         recyclerViewMatches = view.findViewById(R.id.recyclerViewMatches);
         loadingView = view.findViewById(R.id.loadingView); // Initialize loading view
 
-        SportApi sportApi = ApiManager.getSportApi(false);
+        // First try to load from vebo.xyz
+        SportApi sportApi = ApiManager.getSportApi(true);
         sportRepository = new SportRepository(sportApi);
 
         setupSportsRecyclerView();
@@ -131,7 +136,17 @@ public class LiveFragment extends Fragment {
             showLoading(true);
         }
 
-        sportRepository.getLiveMatches(new RepositoryCallback<List<Match>>() {
+        // Create repositories for both APIs
+        SportApi veboApi = ApiManager.getSportApi(true);
+        SportApi thapcamApi = ApiManager.getSportApi(false);
+        SportRepository veboRepository = new SportRepository(veboApi);
+        SportRepository thapcamRepository = new SportRepository(thapcamApi);
+
+        final List<Match> allMatches = new ArrayList<>();
+        final AtomicInteger completedCalls = new AtomicInteger(0);
+
+        // Load matches from vebo.xyz
+        veboRepository.getLiveMatches(new RepositoryCallback<List<Match>>() {
             @Override
             public void onSuccess(List<Match> result) {
                 if (!isAdded()) {
@@ -139,29 +154,80 @@ public class LiveFragment extends Fragment {
                     return;
                 }
 
-                Map<String, List<Match>> matchesBySportType = sportRepository.getMatchesBySportType(result);
-                matches = matchesBySportType.get(sportTypeKey);
-
-                matchesCache.putAll(matchesBySportType);
-
-                if (isInitialLoad || availableSportTypes.length == 0) {
-                    updateSportsAdapter(matchesBySportType);
+                // Add vebo matches first (priority)
+                synchronized (allMatches) {
+                    allMatches.addAll(result);
                 }
 
-                updateSportsAdapter(matchesBySportType);
-                updateMatchesRecyclerView();
-
-                showLoading(false);
+                // Check if both APIs have completed
+                if (completedCalls.incrementAndGet() == 2) {
+                    processAllMatches(allMatches, sportTypeKey);
+                }
             }
 
             @Override
             public void onError(Exception e) {
-                showLoading(false);
-                if (getContext() != null) {
-                    Toast.makeText(getContext(), "Không thể tải dữ liệu của các trận đấu.", Toast.LENGTH_SHORT).show();
+                Log.e("LiveFragment", "Error loading vebo matches", e);
+                if (completedCalls.incrementAndGet() == 2) {
+                    processAllMatches(allMatches, sportTypeKey);
                 }
             }
         });
+
+        // Load matches from thapcam.xyz
+        thapcamRepository.getLiveMatches(new RepositoryCallback<List<Match>>() {
+            @Override
+            public void onSuccess(List<Match> result) {
+                if (!isAdded()) {
+                    showLoading(false);
+                    return;
+                }
+
+                // Add thapcam matches after vebo matches
+                synchronized (allMatches) {
+                    allMatches.addAll(result);
+                }
+
+                // Check if both APIs have completed
+                if (completedCalls.incrementAndGet() == 2) {
+                    processAllMatches(allMatches, sportTypeKey);
+                }
+            }
+
+            @Override
+            public void onError(Exception e) {
+                Log.e("LiveFragment", "Error loading thapcam matches", e);
+                if (completedCalls.incrementAndGet() == 2) {
+                    processAllMatches(allMatches, sportTypeKey);
+                }
+            }
+        });
+    }
+
+    private void processAllMatches(List<Match> allMatches, String sportTypeKey) {
+        if (!isAdded()) {
+            showLoading(false);
+            return;
+        }
+
+        // Remove duplicates if any (based on match ID)
+        List<Match> uniqueMatches = new ArrayList<>(new LinkedHashSet<>(allMatches));
+
+        Map<String, List<Match>> matchesBySportType = new SportRepository(null).getMatchesBySportType(uniqueMatches);
+        matches = matchesBySportType.get(sportTypeKey);
+        matchesCache.putAll(matchesBySportType);
+
+        if (isInitialLoad || availableSportTypes.length == 0) {
+            updateSportsAdapter(matchesBySportType);
+        }
+
+        updateSportsAdapter(matchesBySportType);
+        updateMatchesRecyclerView();
+        showLoading(false);
+
+        if (uniqueMatches.isEmpty() && getContext() != null) {
+            Toast.makeText(getContext(), "Không thể tải dữ liệu của các trận đấu.", Toast.LENGTH_SHORT).show();
+        }
     }
 
     private void updateSportsAdapter(Map<String, List<Match>> matchesBySportType) {
@@ -324,9 +390,31 @@ public class LiveFragment extends Fragment {
         intent.putExtra("match_id", matchId);
         startActivity(intent);
 
-        // Fetch stream URL in background
-        SportApi sportApi = ApiManager.getSportApi(false);
-        Call<JsonObject> call = sportApi.getMatchStreamUrl(matchId);
+        SportApi api;
+        Call<JsonObject> call;
+
+        // Find the match to determine its sport type
+        Match currentMatch = null;
+        if (matches != null) {
+            for (Match match : matches) {
+                if (match.getId().equals(matchId)) {
+                    currentMatch = match;
+                    break;
+                }
+            }
+        }
+
+        // If it's football, use vebo.xyz API
+        if (currentMatch != null && "football".equals(currentMatch.getSport_type())) {
+            api = ApiManager.getSportApi(true); // vebo.xyz
+            call = api.getVeboStreamUrl(matchId);
+        } else {
+            // For other sports, use thapcam.xyz API
+            api = ApiManager.getSportApi(false); // thapcam.xyz
+            // Add "tc" prefix if not already present
+            String tcMatchId = matchId.startsWith("tc") ? matchId.substring(2) : matchId;
+            call = api.getThapcamStreamUrl(tcMatchId);
+        }
 
         call.enqueue(new retrofit2.Callback<JsonObject>() {
             @Override
@@ -347,36 +435,54 @@ public class LiveFragment extends Fragment {
     }
 
     private void parseJsonAndStartPlayer(String jsonResponse, boolean isBackgroundLoad) {
-        Gson gson = new Gson();
-        JsonObject jsonObject = gson.fromJson(jsonResponse, JsonObject.class);
+        try {
+            Gson gson = new Gson();
+            JsonObject jsonObject = gson.fromJson(jsonResponse, JsonObject.class);
+            JsonObject data = jsonObject.getAsJsonObject("data");
 
-        // Check if "play_urls" is null
-        if (jsonObject.getAsJsonObject("data").get("play_urls").isJsonNull()) {
-            if (!isBackgroundLoad) {
-                requireActivity().runOnUiThread(() -> Toast.makeText(getContext(), "Trận đấu chưa được phát sóng.", Toast.LENGTH_SHORT).show());
+            // Check if data is null or play_urls is null/empty
+            if (data == null || data.get("play_urls") == null || data.get("play_urls").isJsonNull()) {
+                if (!isBackgroundLoad) {
+                    requireActivity().runOnUiThread(() -> Toast.makeText(getContext(), "Trận đấu chưa được phát sóng.", Toast.LENGTH_SHORT).show());
+                }
+                return;
             }
-            return;
-        }
 
-        JsonArray playUrls = jsonObject.getAsJsonObject("data").getAsJsonArray("play_urls");
+            JsonArray playUrls = data.getAsJsonArray("play_urls");
+            if (playUrls == null || playUrls.size() == 0) {
+                if (!isBackgroundLoad) {
+                    requireActivity().runOnUiThread(() -> Toast.makeText(getContext(), "Trận đấu chưa được phát sóng.", Toast.LENGTH_SHORT).show());
+                }
+                return;
+            }
 
-        HashMap<String, String> qualityMap = new HashMap<>();
-        for (JsonElement element : playUrls) {
-            JsonObject urlObject = element.getAsJsonObject();
-            String name = urlObject.get("name").getAsString();
-            String url = urlObject.get("url").getAsString();
-            qualityMap.put(name, url);
-        }
+            HashMap<String, String> qualityMap = new HashMap<>();
+            for (JsonElement element : playUrls) {
+                if (!element.isJsonObject()) continue;
+                
+                JsonObject urlObject = element.getAsJsonObject();
+                if (!urlObject.has("name") || !urlObject.has("url")) continue;
 
-        if (!qualityMap.isEmpty()) {
-            if (isBackgroundLoad) {
-                sendStreamUrlToPlayer(qualityMap);
+                String name = urlObject.get("name").getAsString();
+                String url = urlObject.get("url").getAsString();
+                qualityMap.put(name, url);
+            }
+
+            if (!qualityMap.isEmpty()) {
+                if (isBackgroundLoad) {
+                    sendStreamUrlToPlayer(qualityMap);
+                } else {
+                    startVideoPlayer(qualityMap);
+                }
             } else {
-                startVideoPlayer(qualityMap);
+                if (!isBackgroundLoad) {
+                    requireActivity().runOnUiThread(() -> Toast.makeText(getContext(), "Trận đấu chưa được phát sóng.", Toast.LENGTH_SHORT).show());
+                }
             }
-        } else {
+        } catch (Exception e) {
+            Log.e("LiveFragment", "Error parsing JSON response", e);
             if (!isBackgroundLoad) {
-                requireActivity().runOnUiThread(() -> Toast.makeText(getContext(), "Trận đấu chưa được phát sóng.", Toast.LENGTH_SHORT).show());
+                requireActivity().runOnUiThread(() -> Toast.makeText(getContext(), "Có lỗi xảy ra khi tải dữ liệu.", Toast.LENGTH_SHORT).show());
             }
         }
     }
