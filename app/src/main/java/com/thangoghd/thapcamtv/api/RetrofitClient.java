@@ -1,4 +1,4 @@
-package com.thangoghd.thapcamtv;
+package com.thangoghd.thapcamtv.api;
 
 import com.google.android.exoplayer2.BuildConfig;
 
@@ -14,11 +14,9 @@ import javax.net.ssl.*;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.security.SecureRandom;
-import java.security.cert.CertificateException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
-import java.util.logging.Level;
 
 import okhttp3.ConnectionSpec;
 import okhttp3.CipherSuite;

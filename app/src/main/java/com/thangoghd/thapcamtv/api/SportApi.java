@@ -1,4 +1,4 @@
-package com.thangoghd.thapcamtv;
+package com.thangoghd.thapcamtv.api;
 
 import com.google.gson.JsonObject;
 import com.thangoghd.thapcamtv.response.ReplayLinkResponse;

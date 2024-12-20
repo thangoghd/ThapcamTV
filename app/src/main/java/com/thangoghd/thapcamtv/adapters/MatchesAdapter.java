@@ -12,6 +12,7 @@ import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
+import com.thangoghd.thapcamtv.SportType;
 import com.thangoghd.thapcamtv.models.Commentator;
 import com.thangoghd.thapcamtv.LiveFragment;
 import com.thangoghd.thapcamtv.models.Match;
@@ -88,7 +89,14 @@ public class MatchesAdapter extends RecyclerView.Adapter<MatchesAdapter.MatchVie
 
         public void bind(Match match, LiveFragment fragment) {
             TextView tournamentNameView = view.findViewById(R.id.tournamentName);
-            tournamentNameView.setText(match.getTournament() != null ? match.getTournament().getName() : view.getContext().getString(R.string.unknown_tournament));
+            // Add sport emoji before tournament name for live sport type
+            if (match.getTournament() != null) {
+                SportType sportType = SportType.fromKey(match.getSport_type());
+                String tournamentText = sportType.getEmoji() + " " + match.getTournament().getName();
+                tournamentNameView.setText(tournamentText);
+            } else {
+                tournamentNameView.setText(view.getContext().getString(R.string.unknown_tournament));
+            }
 
             // Set home team info
             TextView homeNameView = view.findViewById(R.id.homeName);

@@ -3,6 +3,7 @@ package com.thangoghd.thapcamtv;
 import androidx.annotation.DrawableRes;
 
 public enum SportType {
+    LIVE("live", "Trực Tiếp", R.drawable.navbar_ic_live),
     FOOTBALL("football", "Bóng đá", R.drawable.ic_football),
     BASKETBALL("basketball", "Bóng rổ", R.drawable.ic_basketball),
     ESPORTS("esports", "Thể thao điện tử", R.drawable.ic_esports),
@@ -35,6 +36,35 @@ public enum SportType {
 
     public int getIconResourceId() {
         return iconResourceId;
+    }
+
+    public String getEmoji() {
+        switch (this) {
+            case FOOTBALL:
+                return "⚽";
+            case BASKETBALL:
+                return "🏀";
+            case ESPORTS:
+                return "🎮";
+            case TENNIS:
+                return "🎾";
+            case VOLLEYBALL:
+                return "🏐";
+            case BADMINTON:
+                return "🏸";
+            case BILLIARD:
+                return "🎱";
+            case RACE:
+                return "🏁";
+            case BOXING:
+                return "🥊";
+            case EVENT:
+                return "🗓";
+            case LIVE:
+                return "🔴";
+            default:
+                return "🏆";
+        }
     }
 
     public static SportType fromKey(String key) {

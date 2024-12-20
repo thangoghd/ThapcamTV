@@ -1,4 +1,4 @@
-package com.thangoghd.thapcamtv;
+package com.thangoghd.thapcamtv.api;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;

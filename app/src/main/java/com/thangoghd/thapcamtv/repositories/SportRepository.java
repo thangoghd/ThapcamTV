@@ -3,8 +3,8 @@ import android.util.Log;
 
 import androidx.annotation.NonNull;
 
-import com.thangoghd.thapcamtv.ApiManager;
-import com.thangoghd.thapcamtv.SportApi;
+import com.thangoghd.thapcamtv.api.ApiManager;
+import com.thangoghd.thapcamtv.api.SportApi;
 import com.thangoghd.thapcamtv.models.Match;
 import com.thangoghd.thapcamtv.response.MatchResponse;
 
@@ -23,7 +23,7 @@ import java.util.Map;
 public class SportRepository {
     private final SportApi api;
     private static final List<String> SPORT_PRIORITY = Arrays.asList(
-        "football", "basketball", "esports", "tennis", "volleyball", "badminton", "race", "pool", "wwe", "event"
+        "live", "football", "basketball", "esports", "tennis", "volleyball", "badminton", "race", "pool", "wwe", "event"
     );
 
 
@@ -60,12 +60,28 @@ public class SportRepository {
         Map<String, List<Match>> groupedMatches = new LinkedHashMap<>();
         Map<String, List<Match>> tempGroupedMatches = new HashMap<>();
     
+        // First, handle live matches
+        List<Match> liveMatches = new ArrayList<>();
+        
         // Group matches by sport type
         for (Match match : matches) {
             if (!"finished".equalsIgnoreCase(match.getMatch_status()) && 
                 !"canceled".equalsIgnoreCase(match.getMatch_status())) {
+                
+                // Add to live matches if it's live
+                if (match.getLive()) {
+                    liveMatches.add(match);
+                }
+                
                 tempGroupedMatches.computeIfAbsent(match.getSport_type(), k -> new ArrayList<>()).add(match);
             }
+        }
+        
+        // Add live matches first if there are any
+        if (!liveMatches.isEmpty()) {
+            // Sort live matches by priority
+            liveMatches.sort((m1, m2) -> Integer.compare(m2.getTournament().getPriority(), m1.getTournament().getPriority()));
+            groupedMatches.put("live", liveMatches);
         }
 
         // Sort matches by criteria
@@ -93,7 +109,7 @@ public class SportRepository {
 
         // Add sorted matches to the final map based on SPORT_PRIORITY
         for (String sport : SPORT_PRIORITY) {
-            if (tempGroupedMatches.containsKey(sport)) {
+            if (tempGroupedMatches.containsKey(sport) && !sport.equals("live")) {
                 groupedMatches.put(sport, tempGroupedMatches.get(sport));
             }
         }

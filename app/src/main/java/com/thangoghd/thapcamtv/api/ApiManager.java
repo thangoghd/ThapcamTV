@@ -1,4 +1,4 @@
-package com.thangoghd.thapcamtv;
+package com.thangoghd.thapcamtv.api;
 
 public class ApiManager {
     public static SportApi getSportApi(boolean isSecondUrl) {

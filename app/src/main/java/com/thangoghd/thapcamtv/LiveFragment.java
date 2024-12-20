@@ -24,6 +24,8 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.thangoghd.thapcamtv.adapters.MatchesAdapter;
 import com.thangoghd.thapcamtv.adapters.SportsAdapter;
+import com.thangoghd.thapcamtv.api.ApiManager;
+import com.thangoghd.thapcamtv.api.SportApi;
 import com.thangoghd.thapcamtv.models.Match;
 import com.thangoghd.thapcamtv.repositories.RepositoryCallback;
 import com.thangoghd.thapcamtv.repositories.SportRepository;
