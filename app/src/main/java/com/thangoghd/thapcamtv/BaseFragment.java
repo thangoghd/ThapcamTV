@@ -64,7 +64,7 @@ public abstract class BaseFragment extends Fragment implements ReplayAdapter.OnH
 
         setupPaginationButtons(view);
         setupSearchButton(view);
-        fetchHighlights(currentPage, view);
+        fetchReplays(currentPage, view);
         return view;
     }
 
@@ -76,16 +76,16 @@ public abstract class BaseFragment extends Fragment implements ReplayAdapter.OnH
         searchButton.setOnClickListener(v -> {
             String query = searchInput.getText().toString().trim();
             if (!query.isEmpty()) {
-                searchHighlights(query);
+                searchReplays(query);
                 hideKeyboard();
             } else {
-                fetchHighlights(currentPage, view);
+                fetchReplays(currentPage, view);
             }
         });
 
         deleteButton.setOnClickListener(v -> {
             searchInput.setText("");
-            fetchHighlights(currentPage, view);
+            fetchReplays(currentPage, view);
         });
 
         searchInput.setOnEditorActionListener((v, actionId, event) -> {
@@ -93,10 +93,10 @@ public abstract class BaseFragment extends Fragment implements ReplayAdapter.OnH
                     (event != null && event.getAction() == KeyEvent.ACTION_DOWN && event.getKeyCode() == KeyEvent.KEYCODE_ENTER)) {
                 String query = searchInput.getText().toString().trim();
                 if (!query.isEmpty()) {
-                    searchHighlights(query);
+                    searchReplays(query);
                     hideKeyboard();
                 } else {
-                    fetchHighlights(currentPage, view);
+                    fetchReplays(currentPage, view);
                 }
                 return true;
             }
@@ -104,7 +104,7 @@ public abstract class BaseFragment extends Fragment implements ReplayAdapter.OnH
         });
     }
 
-    protected void searchHighlights(String query) {
+    protected void searchReplays(String query) {
         ApiManager.getSportApi(true).searchReplays(getLink(), query).enqueue(new Callback<ReplayResponse>() {
             @Override
             public void onResponse(Call<ReplayResponse> call, Response<ReplayResponse> response) {
@@ -126,7 +126,7 @@ public abstract class BaseFragment extends Fragment implements ReplayAdapter.OnH
         });
     }
 
-    protected void fetchHighlights(int page, View view) {
+    protected void fetchReplays(int page, View view) {
         // Check cache
         ReplayResponse cachedResponse = ReplayCache.getList(getLink(), page);
         if (cachedResponse != null) {
@@ -201,7 +201,7 @@ public abstract class BaseFragment extends Fragment implements ReplayAdapter.OnH
             return;
         }
         currentPage = page;
-        fetchHighlights(currentPage, getView());
+        fetchReplays(currentPage, getView());
     }
 
     private void updatePaginationViews(View view) {
