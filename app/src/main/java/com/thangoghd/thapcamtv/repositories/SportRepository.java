@@ -79,8 +79,18 @@ public class SportRepository {
         
         // Add live matches first if there are any
         if (!liveMatches.isEmpty()) {
-            // Sort live matches by priority
-            liveMatches.sort((m1, m2) -> Integer.compare(m2.getTournament().getPriority(), m1.getTournament().getPriority()));
+            // Sort live matches by sport type priority first, then by tournament priority
+            liveMatches.sort((m1, m2) -> {
+                // First compare by sport type priority
+                int sport1Index = SPORT_PRIORITY.indexOf(m1.getSport_type());
+                int sport2Index = SPORT_PRIORITY.indexOf(m2.getSport_type());
+                if (sport1Index != sport2Index) {
+                    return Integer.compare(sport1Index, sport2Index);
+                }
+                
+                // If same sport type, compare by tournament priority
+                return Integer.compare(m2.getTournament().getPriority(), m1.getTournament().getPriority());
+            });
             groupedMatches.put("live", liveMatches);
         }
 

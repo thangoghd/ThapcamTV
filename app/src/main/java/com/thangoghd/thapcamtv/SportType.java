@@ -60,8 +60,6 @@ public enum SportType {
                 return "🥊";
             case EVENT:
                 return "🗓";
-            case LIVE:
-                return "🔴";
             default:
                 return "🏆";
         }
