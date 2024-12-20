@@ -175,7 +175,13 @@ public class PlayerActivity extends AppCompatActivity {
             @Override
             public void onPlayerError(PlaybackException error) {
                 Log.e("PlayerActivity", "Không thể phát video: " + error.getMessage() + " | URL: " + url);
-                Toast.makeText(PlayerActivity.this, "Không thể phát video!", Toast.LENGTH_SHORT).show();
+                String errorMessage = "Không thể phát video!";
+                if (error.getCause() instanceof com.google.android.exoplayer2.upstream.HttpDataSource.InvalidResponseCodeException) {
+                    com.google.android.exoplayer2.upstream.HttpDataSource.InvalidResponseCodeException httpError = 
+                        (com.google.android.exoplayer2.upstream.HttpDataSource.InvalidResponseCodeException) error.getCause();
+                    errorMessage = "Không thể phát video! (Mã lỗi: " + httpError.responseCode + ")";
+                }
+                Toast.makeText(PlayerActivity.this, errorMessage, Toast.LENGTH_SHORT).show();
             }
         });
     }
