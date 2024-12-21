@@ -8,6 +8,7 @@ import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
 import android.view.View;
+import android.view.WindowManager;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ImageButton;
@@ -55,6 +56,8 @@ public class PlayerActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         instance = this;
         setContentView(R.layout.activity_player);
+
+        getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
     
         playerView = findViewById(R.id.player_view);
         qualitySpinner = findViewById(R.id.quality_spinner);
@@ -214,6 +217,7 @@ public class PlayerActivity extends AppCompatActivity {
         if (player != null) {
             player.setPlayWhenReady(false);
         }
+        getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
     }
 
     @Override
@@ -222,6 +226,7 @@ public class PlayerActivity extends AppCompatActivity {
         if (player != null) {
             player.setPlayWhenReady(true);
         }
+        getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
     }
 
     @Override

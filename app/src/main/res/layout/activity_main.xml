@@ -106,6 +106,32 @@
                     android:textSize="16sp" />
             </LinearLayout>
 
+            <LinearLayout
+                android:id="@+id/navCheckUpdate"
+                android:layout_width="match_parent"
+                android:layout_height="45dp"
+                android:background="@drawable/menu_item_normal"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:focusable="true">
+
+                <ImageView
+                    android:id="@+id/navUpdateIcon"
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:layout_marginStart="12dp"
+                    android:src="@drawable/navbar_ic_update" />
+
+                <TextView
+                    android:id="@+id/navUpdateText"
+                    android:layout_width="100dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="14dp"
+                    android:text="@string/update"
+                    android:textColor="@android:color/white"
+                    android:textSize="16sp" />
+            </LinearLayout>
+
             <Space
                 android:layout_width="match_parent"
                 android:layout_height="0dp"
