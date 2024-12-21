@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:gravity="center"
+    android:orientation="vertical"
+    android:padding="32dp"
+    android:background="#80000000">
+
+    <TextView
+        android:id="@+id/tvUpdateTitle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="16dp"
+        android:text="Có phiên bản mới"
+        android:textColor="@android:color/white"
+        android:textSize="24sp"
+        android:textStyle="bold" />
+
+    <TextView
+        android:id="@+id/tvVersion"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="24dp"
+        android:textColor="#4CAF50"
+        android:textSize="20sp"
+        android:textStyle="bold" />
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:layout_marginBottom="32dp">
+
+        <TextView
+            android:id="@+id/tvChangelog"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:lineSpacingExtra="8dp"
+            android:textColor="@android:color/white"
+            android:textSize="16sp" />
+    </ScrollView>
+
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center">
+
+        <Button
+            android:id="@+id/btnLater"
+            android:layout_width="150dp"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="16dp"
+            android:text="Để sau"
+            android:textSize="16sp"
+            android:padding="12dp"
+            android:focusable="true"
+            android:nextFocusRight="@id/btnUpdate" />
+
+        <Button
+            android:id="@+id/btnUpdate"
+            android:layout_width="150dp"
+            android:layout_height="wrap_content"
+            android:text="Cập nhật ngay"
+            android:textSize="16sp"
+            android:padding="12dp"
+            android:focusable="true"
+            android:nextFocusLeft="@id/btnLater" />
+    </LinearLayout>
+
+</LinearLayout>

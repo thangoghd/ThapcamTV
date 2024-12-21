@@ -2,6 +2,8 @@ package com.thangoghd.thapcamtv;
 
 import android.animation.ValueAnimator;
 import android.content.Context;
+import android.content.pm.PackageInfo;
+import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.KeyEvent;
@@ -12,6 +14,13 @@ import android.widget.LinearLayout;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentActivity;
 import androidx.leanback.widget.BrowseFrameLayout;
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
+
+import com.thangoghd.thapcamtv.api.RetrofitClient;
+import com.thangoghd.thapcamtv.utils.UpdateManager;
+import com.thangoghd.thapcamtv.models.GitHubRelease;
 
 public class MainActivity extends FragmentActivity implements View.OnKeyListener{
     private BrowseFrameLayout navBar;
@@ -19,9 +28,11 @@ public class MainActivity extends FragmentActivity implements View.OnKeyListener
     private LinearLayout btnLive;
     private LinearLayout btnHighlight;
     private LinearLayout btnReplay;
+    private LinearLayout btnCheckUpdate;
     private LinearLayout lastSelectedMenu;
 
     private boolean SIDE_MENU = false;
+    private UpdateManager updateManager;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -32,34 +43,44 @@ public class MainActivity extends FragmentActivity implements View.OnKeyListener
         btnLive = findViewById(R.id.navLive);
         btnHighlight = findViewById(R.id.navHighlight);
         btnReplay = findViewById(R.id.navFullMatch);
+        btnCheckUpdate = findViewById(R.id.navCheckUpdate);
+        
+        // Ẩn nút Check Update mặc định
+        btnCheckUpdate.setVisibility(View.GONE);
 
         navBar.setOnKeyListener(this);
         btnLive.setOnKeyListener(this);
         btnHighlight.setOnKeyListener(this);
         btnReplay.setOnKeyListener(this);
+        btnCheckUpdate.setOnKeyListener(this);
 
         lastSelectedMenu = btnLive;
         lastSelectedMenu.requestFocus();
 
         changeFragment(new LiveFragment());
+        
+        // Khởi tạo và check update
+        updateManager = new UpdateManager(this);
+        checkForUpdate();
     }
 
     @Override
     public boolean onKey(View view, int keyCode, KeyEvent keyEvent) {
         if (keyCode == KeyEvent.KEYCODE_DPAD_CENTER || keyCode == KeyEvent.KEYCODE_ENTER){
-            Log.d("MainActivity", String.valueOf(lastSelectedMenu));
             if (view.getId() == R.id.navLive) {
                 changeFragment(new LiveFragment());
-                lastSelectedMenu = (LinearLayout) view;
-            }
-            else if (view.getId() == R.id.navHighlight) {
+                animateMenu(btnLive);
+            } else if (view.getId() == R.id.navHighlight) {
                 changeFragment(new HighlightFragment());
-                lastSelectedMenu = (LinearLayout) view;
-            }
-            else if (view.getId() == R.id.navFullMatch) {
+                animateMenu(btnHighlight);
+            } else if (view.getId() == R.id.navFullMatch) {
                 changeFragment(new FullMatchFragment());
-                lastSelectedMenu = (LinearLayout) view;
+                animateMenu(btnReplay);
+            } else if (view.getId() == R.id.navCheckUpdate) {
+                changeFragment(new UpdateFragment());
+                animateMenu(btnCheckUpdate);
             }
+            return true;
         } else if (keyCode == KeyEvent.KEYCODE_DPAD_LEFT) {
             if (!SIDE_MENU) {
                 openMenu();
@@ -78,7 +99,7 @@ public class MainActivity extends FragmentActivity implements View.OnKeyListener
                 closeMenu();
             }
         } else if (keyCode == KeyEvent.KEYCODE_DPAD_DOWN) {
-            if (btnReplay.hasFocus()) {
+            if (btnCheckUpdate.hasFocus()) {
                 closeMenu();
             }
         }
@@ -125,10 +146,78 @@ public class MainActivity extends FragmentActivity implements View.OnKeyListener
         animator.start();
     }
 
+    private void animateMenu(LinearLayout menu) {
+        lastSelectedMenu = menu;
+        lastSelectedMenu.requestFocus();
+    }
+
     private void changeFragment(Fragment fragment) {
         getSupportFragmentManager().beginTransaction()
                 .replace(R.id.sideMenu, fragment)
                 .commit();
         closeMenu();
+    }
+
+    private void checkForUpdate() {
+        RetrofitClient.getGitHubApiService()
+            .getLatestRelease("thangoghd", "ThapcamTV")
+            .enqueue(new Callback<GitHubRelease>() {
+                @Override
+                public void onResponse(Call<GitHubRelease> call, Response<GitHubRelease> response) {
+                    if (response.isSuccessful() && response.body() != null) {
+                        GitHubRelease release = response.body();
+                        String currentVersion = getCurrentVersion();
+                        String latestVersion = release.getTagName().replace("v", "");
+                        
+                        if (isUpdateAvailable(currentVersion, latestVersion)) {
+                            // Hiện nút Check Update khi có bản mới
+                            btnCheckUpdate.setVisibility(View.VISIBLE);
+                            changeFragment(new UpdateFragment());
+                            animateMenu(btnCheckUpdate);
+                        } else {
+                            // Ẩn nút Check Update khi đang là bản mới nhất
+                            btnCheckUpdate.setVisibility(View.GONE);
+                        }
+                    }
+                }
+                
+                @Override
+                public void onFailure(Call<GitHubRelease> call, Throwable t) {
+                    // Ẩn nút Check Update khi có lỗi
+                    btnCheckUpdate.setVisibility(View.GONE);
+                }
+            });
+    }
+    
+    private String getCurrentVersion() {
+        try {
+            return getPackageManager()
+                .getPackageInfo(getPackageName(), 0)
+                .versionName;
+        } catch (Exception e) {
+            return "0.0.0";
+        }
+    }
+    
+    private boolean isUpdateAvailable(String currentVersion, String latestVersion) {
+        try {
+            String[] current = currentVersion.split("\\.");
+            String[] latest = latestVersion.split("\\.");
+            
+            for (int i = 0; i < Math.min(current.length, latest.length); i++) {
+                int currentPart = Integer.parseInt(current[i]);
+                int latestPart = Integer.parseInt(latest[i]);
+                
+                if (latestPart > currentPart) {
+                    return true;
+                } else if (latestPart < currentPart) {
+                    return false;
+                }
+            }
+            
+            return latest.length > current.length;
+        } catch (Exception e) {
+            return false;
+        }
     }
 }
