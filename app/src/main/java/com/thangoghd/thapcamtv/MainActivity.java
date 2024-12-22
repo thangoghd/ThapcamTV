@@ -30,6 +30,10 @@ import com.thangoghd.thapcamtv.utils.UpdateManager;
 import com.thangoghd.thapcamtv.models.GitHubRelease;
 
 public class MainActivity extends FragmentActivity implements View.OnKeyListener{
+    private static final long DOUBLE_BACK_PRESS_INTERVAL = 2000; // 2 seconds
+    private long lastBackPressTime;
+    private Toast exitToast;
+    
     private BrowseFrameLayout navBar;
 
     private LinearLayout btnLive;
@@ -70,16 +74,6 @@ public class MainActivity extends FragmentActivity implements View.OnKeyListener
         updateManager = new UpdateManager(this);
         checkForUpdate();
 
-        // Handle deep link from channel
-        if (getIntent() != null && getIntent().getData() != null) {
-            Uri data = getIntent().getData();
-            if (data.getHost().equals("highlight")) {
-                String highlightId = data.getLastPathSegment();
-                if (highlightId != null) {
-                    openHighlightVideo(highlightId);
-                }
-            }
-        }
     }
 
     @Override
@@ -130,7 +124,13 @@ public class MainActivity extends FragmentActivity implements View.OnKeyListener
             SIDE_MENU = false;
             closeMenu();
         } else {
-            super.onBackPressed();
+            if (lastBackPressTime + DOUBLE_BACK_PRESS_INTERVAL > System.currentTimeMillis()) {
+                super.onBackPressed();
+            } else {
+                exitToast = Toast.makeText(this, "Press back again to exit", Toast.LENGTH_SHORT);
+                exitToast.show();
+            }
+            lastBackPressTime = System.currentTimeMillis();
         }
     }
 
@@ -237,26 +237,11 @@ public class MainActivity extends FragmentActivity implements View.OnKeyListener
         }
     }
 
-    private void openHighlightVideo(String id) {
-        ApiManager.getSportApi(true).getReplayDetails(id).enqueue(new Callback<ReplayLinkResponse>() {
-            @Override
-            public void onResponse(Call<ReplayLinkResponse> call, Response<ReplayLinkResponse> response) {
-                if (response.isSuccessful() && response.body() != null) {
-                    String videoUrl = response.body().getData().getVideoUrl();
-                    Intent intent = new Intent(MainActivity.this, PlayerActivity.class);
-                    intent.putExtra("replay_url", videoUrl);
-                    intent.putExtra("show_quality_spinner", false);
-                    intent.putExtra("source_type", "replay");
-                    startActivity(intent);
-                } else {
-                    Toast.makeText(MainActivity.this, "Không thể lấy được luồng video", Toast.LENGTH_SHORT).show();
-                }
-            }
-
-            @Override
-            public void onFailure(Call<ReplayLinkResponse> call, Throwable t) {
-                Toast.makeText(MainActivity.this, "Error: " + t.getMessage(), Toast.LENGTH_SHORT).show();
-            }
-        });
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        if (exitToast != null) {
+            exitToast.cancel();
+        }
     }
 }

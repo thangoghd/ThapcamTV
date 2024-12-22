@@ -3,6 +3,7 @@ package com.thangoghd.thapcamtv;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -15,6 +16,8 @@ import android.widget.ImageButton;
 import android.widget.ProgressBar;
 import android.widget.Spinner;
 import android.widget.Toast;
+
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import com.google.android.exoplayer2.ExoPlayer;
@@ -24,6 +27,17 @@ import com.google.android.exoplayer2.Player;
 import com.google.android.exoplayer2.source.hls.HlsMediaSource;
 import com.google.android.exoplayer2.ui.PlayerView;
 import com.google.android.exoplayer2.upstream.DefaultHttpDataSource;
+import com.google.gson.Gson;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.thangoghd.thapcamtv.api.ApiManager;
+import com.thangoghd.thapcamtv.api.SportApi;
+import com.thangoghd.thapcamtv.response.ReplayLinkResponse;
+
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -65,11 +79,37 @@ public class PlayerActivity extends AppCompatActivity {
 
         String videoUrl = getIntent().getStringExtra("replay_url");
         String sourceType = getIntent().getStringExtra("source_type");
+        String matchId = getIntent().getStringExtra("match_id");
+        String sportType = getIntent().getStringExtra("sport_type");
         boolean isLoading = getIntent().getBooleanExtra("is_loading", false);
-        if (isLoading) {
+        boolean showQualitySpinner = getIntent().getBooleanExtra("show_quality_spinner", true);
+
+        // Handle intent from Android TV channel
+        if (getIntent().getData() != null) {
+            Uri data = getIntent().getData();
+            if ("highlight".equals(data.getHost())) {
+                String highlightId = data.getLastPathSegment();
+                if (highlightId != null) {
+                    showLoading(true);
+                    fetchHighlightVideo(highlightId);
+                    return;
+                }
+            }
+        }
+
+        Log.d("PlayerActivity", "onCreate - sourceType: " + sourceType + 
+              ", matchId: " + matchId + ", sportType: " + sportType + 
+              ", isLoading: " + isLoading);
+
+        if (isLoading && matchId != null) {
             showLoading(true);
+            fetchMatchStreamUrl(matchId, sportType);
         } else {
             handleVideoSource(sourceType, videoUrl);
+        }
+
+        if (!showQualitySpinner) {
+            qualitySpinner.setVisibility(View.GONE);
         }
 
         qualitySpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
@@ -235,5 +275,122 @@ public class PlayerActivity extends AppCompatActivity {
         if (player != null) {
             player.setPlayWhenReady(false);
         }
+    }
+
+    private void fetchMatchStreamUrl(String matchId, String sportType) {
+        Log.d("PlayerActivity", "Fetching stream URL for matchId: " + matchId + ", sportType: " + sportType);
+        
+        SportApi api;
+        Call<JsonObject> call;
+
+        // If it's football, use vebo.xyz API
+        if ("football".equals(sportType)) {
+            api = ApiManager.getSportApi(true); // vebo.xyz
+            call = api.getVeboStreamUrl(matchId);
+        } else {
+            // For other sports, use thapcam.xyz API
+            api = ApiManager.getSportApi(false); // thapcam.xyz
+            // Add "tc" prefix if not already present
+            String tcMatchId = matchId.startsWith("tc") ? matchId.substring(2) : matchId;
+            call = api.getThapcamStreamUrl(tcMatchId);
+        }
+
+        call.enqueue(new Callback<JsonObject>() {
+            @Override
+            public void onResponse(@NonNull Call<JsonObject> call, @NonNull Response<JsonObject> response) {
+                Log.d("PlayerActivity", "Stream URL API response received");
+                if (response.isSuccessful() && response.body() != null) {
+                    String jsonResponse = response.body().toString();
+                    try {
+                        parseJsonAndStartPlayer(jsonResponse);
+                    } catch (Exception e) {
+                        Log.e("PlayerActivity", "Error parsing stream URL response", e);
+                        showError("Có lỗi xảy ra khi tải dữ liệu.");
+                    }
+                } else {
+                    Log.e("PlayerActivity", "Stream URL API error: " + response.code());
+                    showError("Không thể tải dữ liệu trận đấu.");
+                }
+            }
+            
+            @Override
+            public void onFailure(@NonNull Call<JsonObject> call, @NonNull Throwable t) {
+                Log.e("PlayerActivity", "Stream URL API call failed", t);
+                showError("Không thể kết nối đến máy chủ.");
+            }
+        });
+    }
+
+    private void parseJsonAndStartPlayer(String jsonResponse) {
+        try {
+            Gson gson = new Gson();
+            JsonObject jsonObject = gson.fromJson(jsonResponse, JsonObject.class);
+            JsonObject data = jsonObject.getAsJsonObject("data");
+
+            // Check if data is null or play_urls is null/empty
+            if (data == null || data.get("play_urls") == null || data.get("play_urls").isJsonNull()) {
+                Log.w("PlayerActivity", "No play URLs found in response");
+                showError("Trận đấu chưa được phát sóng.");
+                return;
+            }
+
+            JsonArray playUrls = data.getAsJsonArray("play_urls");
+            if (playUrls == null || playUrls.size() == 0) {
+                Log.w("PlayerActivity", "Empty play URLs array");
+                showError("Trận đấu chưa được phát sóng.");
+                return;
+            }
+
+            HashMap<String, String> qualityMap = new HashMap<>();
+            for (JsonElement element : playUrls) {
+                if (!element.isJsonObject()) continue;
+                
+                JsonObject urlObject = element.getAsJsonObject();
+                if (!urlObject.has("name") || !urlObject.has("url")) continue;
+
+                String name = urlObject.get("name").getAsString();
+                String url = urlObject.get("url").getAsString();
+                qualityMap.put(name, url);
+                Log.d("PlayerActivity", "Found quality option: " + name);
+            }
+
+            if (!qualityMap.isEmpty()) {
+                onStreamUrlReceived(qualityMap);
+            } else {
+                Log.w("PlayerActivity", "No valid stream URLs found");
+                showError("Trận đấu chưa được phát sóng.");
+            }
+        } catch (Exception e) {
+            Log.e("PlayerActivity", "Error parsing JSON response", e);
+            showError("Có lỗi xảy ra khi tải dữ liệu.");
+        }
+    }
+
+    private void fetchHighlightVideo(String id) {
+        Log.d("PlayerActivity", "Fetching highlight video for id: " + id);
+        
+        ApiManager.getSportApi(true).getReplayDetails(id).enqueue(new Callback<ReplayLinkResponse>() {
+            @Override
+            public void onResponse(@NonNull Call<ReplayLinkResponse> call, @NonNull Response<ReplayLinkResponse> response) {
+                Log.d("PlayerActivity", "Highlight video API response received");
+                if (response.isSuccessful() && response.body() != null) {
+                    String videoUrl = response.body().getData().getVideoUrl();
+                    runOnUiThread(() -> {
+                        showLoading(false);
+                        handleVideoSource("replay", videoUrl);
+                        qualitySpinner.setVisibility(View.GONE);
+                    });
+                } else {
+                    Log.e("PlayerActivity", "Highlight video API error: " + response.code());
+                    showError("Không thể lấy được luồng video");
+                }
+            }
+
+            @Override
+            public void onFailure(@NonNull Call<ReplayLinkResponse> call, @NonNull Throwable t) {
+                Log.e("PlayerActivity", "Highlight video API call failed", t);
+                showError("Error: " + t.getMessage());
+            }
+        });
     }
 }

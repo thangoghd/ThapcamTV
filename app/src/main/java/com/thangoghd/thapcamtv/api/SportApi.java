@@ -13,7 +13,7 @@ public interface SportApi {
     @GET("api/match/featured")
     Call<MatchResponse> getLiveMatches();
 
-    @GET("api/match/tc/{matchId}/no/meta")
+    @GET("api/match/{matchId}/meta")
     Call<JsonObject> getThapcamStreamUrl(@Path("matchId") String matchId);
 
     @GET("api/match/{matchId}/meta")

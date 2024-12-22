@@ -43,6 +43,7 @@
     </ScrollView>
 
     <LinearLayout
+        style="?android:attr/buttonBarStyle"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
@@ -50,10 +51,11 @@
 
         <Button
             android:id="@+id/btnLater"
+            style="?android:attr/buttonBarButtonStyle"
             android:layout_width="150dp"
             android:layout_height="wrap_content"
             android:layout_marginEnd="16dp"
-            android:text="Để sau"
+            android:text="@string/maybeLater"
             android:textSize="16sp"
             android:padding="12dp"
             android:focusable="true"
@@ -61,9 +63,10 @@
 
         <Button
             android:id="@+id/btnUpdate"
+            style="?android:attr/buttonBarButtonStyle"
             android:layout_width="150dp"
             android:layout_height="wrap_content"
-            android:text="Cập nhật ngay"
+            android:text="@string/updateNow"
             android:textSize="16sp"
             android:padding="12dp"
             android:focusable="true"

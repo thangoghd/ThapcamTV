@@ -23,7 +23,7 @@ import java.util.Map;
 public class SportRepository {
     private final SportApi api;
     private static final List<String> SPORT_PRIORITY = Arrays.asList(
-        "live", "football", "basketball", "esports", "tennis", "volleyball", "badminton", "race", "pool", "wwe", "event"
+        "live", "football", "basketball", "esports", "tennis", "volleyball", "badminton", "race", "pool", "wwe", "event", "other"
     );
 
 

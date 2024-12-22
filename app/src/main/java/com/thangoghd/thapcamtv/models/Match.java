@@ -129,8 +129,5 @@ public class Match {
     public String getTimeInMatch(){return time_str;}
 
     public void setTimeInMatch(String time_str){this.time_str = time_str;}
-
-
-
 }
 

@@ -17,7 +17,7 @@
         android:required="true" />
 
     <application
-        android:name=".ThapcamTVApplication"
+        android:name=".Application"
         android:allowBackup="true"
         android:icon="@mipmap/ic_thapcamtv"
         android:label="@string/app_name"
@@ -34,17 +34,30 @@
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LEANBACK_LAUNCHER" />
             </intent-filter>
+        </activity>
+        <activity
+            android:name=".PlayerActivity"
+            android:configChanges="keyboard|keyboardHidden|navigation"
+            android:exported="true"
+            android:launchMode="singleTop"
+            android:screenOrientation="landscape"
+            android:theme="@style/Theme.AppCompat.NoActionBar">
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
-                <data
-                    android:scheme="thapcamtv"
-                    android:host="highlight" />
+                <data android:scheme="thapcamtv" android:host="live" />
+                <data android:scheme="thapcamtv" android:host="live" android:pathPattern="/.*" />
+                <data android:scheme="thapcamtv" android:host="live" android:pathPattern="/.*\\?.*" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="thapcamtv" android:host="highlight" />
+                <data android:scheme="thapcamtv" android:host="highlight" android:pathPattern="/.*" />
             </intent-filter>
         </activity>
-        <activity android:name=".PlayerActivity"
-            android:screenOrientation="landscape" />
         <provider
             android:name="androidx.core.content.FileProvider"
             android:authorities="${applicationId}.provider"
@@ -57,7 +70,11 @@
         <service
             android:name=".channels.HighlightChannelUpdateService"
             android:permission="android.permission.BIND_JOB_SERVICE"
-            android:exported="false" />
+            android:exported="true" />
+        <service
+            android:name=".channels.LiveChannelUpdateService"
+            android:permission="android.permission.BIND_JOB_SERVICE"
+            android:exported="true" />
     </application>
 
 </manifest>

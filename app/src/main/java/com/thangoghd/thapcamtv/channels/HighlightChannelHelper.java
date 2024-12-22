@@ -32,6 +32,8 @@ public class HighlightChannelHelper {
     private static final String COLUMN_TYPE = "type";
     private static final String COLUMN_POSTER_ART_URI = "poster_art_uri";
     private static final String COLUMN_INTENT_URI = "intent_uri";
+    private static final String COLUMN_INTERNAL_PROVIDER_ID = "internal_provider_id";
+    private static final String COLUMN_SEARCHABLE = "searchable";
     private static final String TYPE_PREVIEW = "TYPE_PREVIEW";
     private static final String TYPE_MOVIE = "TYPE_MOVIE";
 
@@ -81,7 +83,7 @@ public class HighlightChannelHelper {
         // Create new channel if it doesn't exist
         Channel.Builder builder = new Channel.Builder();
         builder.setType(TvContractCompat.Channels.TYPE_PREVIEW)
-                .setDisplayName("Highlight Videos")
+                .setDisplayName("Highlight")
                 .setAppLinkIntentUri(Uri.parse("thapcamtv://highlight"))
                 .setInternalProviderId(CHANNEL_ID);
 
@@ -94,14 +96,11 @@ public class HighlightChannelHelper {
         long channelId = ContentUris.parseId(channelUri);
         Log.d("HighlightChannel", "Created new channel with ID: " + channelId);
         
-        // Add channel logo
-        try {
-            Bitmap bitmap = BitmapFactory.decodeResource(context.getResources(), R.mipmap.ic_thapcamtv);
-            ChannelLogoUtils.storeChannelLogo(context, channelId, bitmap);
-            Log.d("HighlightChannel", "Channel logo added successfully");
-        } catch (Exception e) {
-            Log.e("HighlightChannel", "Error storing channel logo", e);
-        }
+
+        Bitmap bitmap = BitmapFactory.decodeResource(context.getResources(), R.mipmap.ic_thapcamtv);
+        ChannelLogoUtils.storeChannelLogo(context, channelId, bitmap);
+        Log.d("HighlightChannel", "Channel logo added successfully");
+
         
         // Make channel browsable
         TvContractCompat.requestChannelBrowsable(context, channelId);
@@ -118,20 +117,18 @@ public class HighlightChannelHelper {
         ContentValues values = new ContentValues();
         values.put(COLUMN_CHANNEL_ID, channelId);
         values.put(COLUMN_TITLE, replay.getName());
-        values.put(COLUMN_TYPE, TYPE_MOVIE);
         values.put(COLUMN_POSTER_ART_URI, replay.getFeatureImage());
+        values.put(COLUMN_TYPE, TYPE_MOVIE);
+        values.put(COLUMN_INTERNAL_PROVIDER_ID, replay.getId());
+        values.put(COLUMN_SEARCHABLE, 1);
+        
+        // Create intent URI for Android TV
         values.put(COLUMN_INTENT_URI, "thapcamtv://highlight/" + replay.getId());
 
         Uri programUri = context.getContentResolver().insert(
             TvContractCompat.PreviewPrograms.CONTENT_URI, 
             values
         );
-        
-//        if (programUri != null) {
-//            Log.d("HighlightChannel", "Added program: " + replay.getName());
-//        } else {
-//            Log.e("HighlightChannel", "Failed to add program: " + replay.getName());
-//        }
     }
 
     private static Intent createProgramIntent(String replayId) {

@@ -214,27 +214,8 @@ public class LiveFragment extends Fragment {
             showLoading(false);
             return;
         }
-
-        // Create a map to store matches by key_sync
-        Map<String, Match> matchMap = new HashMap<>();
-
-        // Iterate over the list in the correct order (vebo first, thapcam last)
-        for (Match match : allMatches) {
-            String keySync = match.getSync();
-            if (keySync != null) {
-                // If it's football and already exists in the map, keep the vebo data (vebo priority)
-                if ("football".equals(match.getSport_type()) && matchMap.containsKey(keySync)) {
-                    continue;
-                }
-                // Otherwise, add the match to the map
-                matchMap.put(keySync, match);
-            }
-        }
-
-        // Convert the map values to a list
-        List<Match> uniqueMatches = new ArrayList<>(matchMap.values());
-
-        Map<String, List<Match>> matchesBySportType = new SportRepository(null).getMatchesBySportType(uniqueMatches);
+        
+        Map<String, List<Match>> matchesBySportType = new SportRepository(null).getMatchesBySportType(allMatches);
         matches = matchesBySportType.get(sportTypeKey);
         matchesCache.putAll(matchesBySportType);
 
@@ -246,7 +227,7 @@ public class LiveFragment extends Fragment {
         updateMatchesRecyclerView();
         showLoading(false);
 
-        if (uniqueMatches.isEmpty() && getContext() != null) {
+        if (allMatches.isEmpty() && getContext() != null) {
             Toast.makeText(getContext(), "Không thể tải dữ liệu của các trận đấu.", Toast.LENGTH_SHORT).show();
         }
     }
@@ -432,9 +413,7 @@ public class LiveFragment extends Fragment {
         } else {
             // For other sports, use thapcam.xyz API
             api = ApiManager.getSportApi(false); // thapcam.xyz
-            // Add "tc" prefix if not already present
-            String tcMatchId = matchId.startsWith("tc") ? matchId.substring(2) : matchId;
-            call = api.getThapcamStreamUrl(tcMatchId);
+            call = api.getThapcamStreamUrl(matchId);
         }
 
         call.enqueue(new retrofit2.Callback<JsonObject>() {
@@ -444,13 +423,16 @@ public class LiveFragment extends Fragment {
 
                 if (response.isSuccessful() && response.body() != null) {
                     String jsonResponse = response.body().toString();
-                    parseJsonAndStartPlayer(jsonResponse, true); // true indicates this is a background load
+                    try{
+                        parseJsonAndStartPlayer(jsonResponse, true);
+                    } catch (Exception e) {
+                        Toast.makeText(getContext(), "Có lỗi xảy ra khi tải luồng từ Thapcam.", Toast.LENGTH_SHORT).show();
+                    }
                 }
             }
-
             @Override
             public void onFailure(@NonNull Call<JsonObject> call, @NonNull Throwable t) {
-                // No need to show toast as PlayerActivity will handle the error
+
             }
         });
     }
