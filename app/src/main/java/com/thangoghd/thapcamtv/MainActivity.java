@@ -189,8 +189,6 @@ public class MainActivity extends FragmentActivity implements View.OnKeyListener
                         if (isUpdateAvailable(currentVersion, latestVersion)) {
                             // Hiện nút Check Update khi có bản mới
                             btnCheckUpdate.setVisibility(View.VISIBLE);
-                            changeFragment(new UpdateFragment());
-                            animateMenu(btnCheckUpdate);
                         } else {
                             // Ẩn nút Check Update khi đang là bản mới nhất
                             btnCheckUpdate.setVisibility(View.GONE);

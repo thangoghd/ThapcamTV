@@ -7,6 +7,7 @@ import android.content.ContentUris;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
+import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.media.tv.TvContract;
@@ -48,14 +49,42 @@ public class HighlightChannelHelper {
 
         Log.d("HighlightChannel", "Creating or getting channel...");
 
-        // Create channel object
+        // Check if channel already exists
+        String[] projection = {TvContractCompat.Channels._ID, "internal_provider_id"};
+        
+        try (Cursor cursor = context.getContentResolver().query(
+                TvContractCompat.Channels.CONTENT_URI,
+                projection,
+                null,
+                null,
+                null)) {
+            
+            if (cursor != null) {
+                try {
+                    int providerIdIndex = cursor.getColumnIndexOrThrow("internal_provider_id");
+                    int idIndex = cursor.getColumnIndexOrThrow(TvContractCompat.Channels._ID);
+                    
+                    while (cursor.moveToNext()) {
+                        String providerId = cursor.getString(providerIdIndex);
+                        if (CHANNEL_ID.equals(providerId)) {
+                            long existingChannelId = cursor.getLong(idIndex);
+                            Log.d("HighlightChannel", "Found existing channel with ID: " + existingChannelId);
+                            return existingChannelId;
+                        }
+                    }
+                } catch (IllegalArgumentException e) {
+                    Log.e("HighlightChannel", "Column not found", e);
+                }
+            }
+        }
+
+        // Create new channel if it doesn't exist
         Channel.Builder builder = new Channel.Builder();
         builder.setType(TvContractCompat.Channels.TYPE_PREVIEW)
                 .setDisplayName("Highlight Videos")
                 .setAppLinkIntentUri(Uri.parse("thapcamtv://highlight"))
                 .setInternalProviderId(CHANNEL_ID);
 
-        // Add channel logo
         Uri channelUri = context.getContentResolver().insert(TvContractCompat.Channels.CONTENT_URI, builder.build().toContentValues());
         if (channelUri == null) {
             Log.e("HighlightChannel", "Failed to create channel");
@@ -63,7 +92,7 @@ public class HighlightChannelHelper {
         }
         
         long channelId = ContentUris.parseId(channelUri);
-        Log.d("HighlightChannel", "Channel created/found with ID: " + channelId);
+        Log.d("HighlightChannel", "Created new channel with ID: " + channelId);
         
         // Add channel logo
         try {
