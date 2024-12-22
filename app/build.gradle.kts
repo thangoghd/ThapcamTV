@@ -48,4 +48,7 @@ dependencies {
     implementation("com.google.android.exoplayer:exoplayer:2.19.1")
     implementation(libs.androidx.appcompat)
     implementation(libs.material)
+    // https://mvnrepository.com/artifact/androidx.tvprovider/tvprovider
+    implementation("androidx.tvprovider:tvprovider:1.0.0")
+    implementation(libs.video)
 }

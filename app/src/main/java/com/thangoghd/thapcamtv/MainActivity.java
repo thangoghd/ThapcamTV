@@ -2,23 +2,29 @@ package com.thangoghd.thapcamtv;
 
 import android.animation.ValueAnimator;
 import android.content.Context;
+import android.content.Intent;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
+import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.View;
 import android.view.animation.DecelerateInterpolator;
 import android.widget.LinearLayout;
+import android.widget.Toast;
 
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentActivity;
 import androidx.leanback.widget.BrowseFrameLayout;
+
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 
+import com.thangoghd.thapcamtv.api.ApiManager;
 import com.thangoghd.thapcamtv.api.RetrofitClient;
+import com.thangoghd.thapcamtv.response.ReplayLinkResponse;
 import com.thangoghd.thapcamtv.utils.UpdateManager;
 import com.thangoghd.thapcamtv.models.GitHubRelease;
 
@@ -62,6 +68,17 @@ public class MainActivity extends FragmentActivity implements View.OnKeyListener
         // Khởi tạo và check update
         updateManager = new UpdateManager(this);
         checkForUpdate();
+
+        // Handle deep link from channel
+        if (getIntent() != null && getIntent().getData() != null) {
+            Uri data = getIntent().getData();
+            if (data.getHost().equals("highlight")) {
+                String highlightId = data.getLastPathSegment();
+                if (highlightId != null) {
+                    openHighlightVideo(highlightId);
+                }
+            }
+        }
     }
 
     @Override
@@ -219,5 +236,28 @@ public class MainActivity extends FragmentActivity implements View.OnKeyListener
         } catch (Exception e) {
             return false;
         }
+    }
+
+    private void openHighlightVideo(String id) {
+        ApiManager.getSportApi(true).getReplayDetails(id).enqueue(new Callback<ReplayLinkResponse>() {
+            @Override
+            public void onResponse(Call<ReplayLinkResponse> call, Response<ReplayLinkResponse> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    String videoUrl = response.body().getData().getVideoUrl();
+                    Intent intent = new Intent(MainActivity.this, PlayerActivity.class);
+                    intent.putExtra("replay_url", videoUrl);
+                    intent.putExtra("show_quality_spinner", false);
+                    intent.putExtra("source_type", "replay");
+                    startActivity(intent);
+                } else {
+                    Toast.makeText(MainActivity.this, "Không thể lấy được luồng video", Toast.LENGTH_SHORT).show();
+                }
+            }
+
+            @Override
+            public void onFailure(Call<ReplayLinkResponse> call, Throwable t) {
+                Toast.makeText(MainActivity.this, "Error: " + t.getMessage(), Toast.LENGTH_SHORT).show();
+            }
+        });
     }
 }

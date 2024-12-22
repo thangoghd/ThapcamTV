@@ -12,6 +12,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import com.thangoghd.thapcamtv.api.ApiManager;
+import com.thangoghd.thapcamtv.channels.HighlightChannelHelper;
 import com.thangoghd.thapcamtv.response.ReplayLinkResponse;
 
 import retrofit2.Call;
@@ -19,6 +20,8 @@ import retrofit2.Callback;
 import retrofit2.Response;
 
 public class HighlightFragment extends BaseFragment {
+    private long channelId = -1;
+
     @Override
     protected String getLink() {
         return "highlight";
@@ -29,7 +32,19 @@ public class HighlightFragment extends BaseFragment {
         View view = super.onCreateView(inflater, container, savedInstanceState);
         TextView titleText = view.findViewById(R.id.titleText);
         titleText.setText("Highlight");
+
+        if (HighlightChannelHelper.isChannelSupported(requireContext())) {
+            initializeChannel();
+        }
+
         return view;
+    }
+
+    private void initializeChannel() {
+        channelId = HighlightChannelHelper.createOrGetChannel(requireContext());
+        if (channelId != -1) {
+            HighlightChannelHelper.scheduleChannelUpdate(requireContext());
+        }
     }
 
     @Override
