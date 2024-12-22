@@ -1,4 +1,4 @@
-package com.thangoghd.thapcamtv;
+package com.thangoghd.thapcamtv.fragments;
 
 import android.content.Intent;
 import android.os.Bundle;
@@ -22,6 +22,10 @@ import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import com.thangoghd.thapcamtv.PlayerActivity;
+import com.thangoghd.thapcamtv.R;
+import com.thangoghd.thapcamtv.SpaceItemDecoration;
+import com.thangoghd.thapcamtv.SportType;
 import com.thangoghd.thapcamtv.adapters.MatchesAdapter;
 import com.thangoghd.thapcamtv.adapters.SportsAdapter;
 import com.thangoghd.thapcamtv.api.ApiManager;
@@ -32,7 +36,6 @@ import com.thangoghd.thapcamtv.repositories.SportRepository;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;

@@ -14,7 +14,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.bumptech.glide.Glide;
 import com.thangoghd.thapcamtv.SportType;
 import com.thangoghd.thapcamtv.models.Commentator;
-import com.thangoghd.thapcamtv.LiveFragment;
+import com.thangoghd.thapcamtv.fragments.LiveFragment;
 import com.thangoghd.thapcamtv.models.Match;
 import com.thangoghd.thapcamtv.R;
 

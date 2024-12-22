@@ -1,4 +1,4 @@
-package com.thangoghd.thapcamtv;
+package com.thangoghd.thapcamtv.fragments;
 
 import android.content.Intent;
 import android.os.Bundle;
@@ -11,6 +11,9 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
+import com.thangoghd.thapcamtv.BaseFragment;
+import com.thangoghd.thapcamtv.PlayerActivity;
+import com.thangoghd.thapcamtv.R;
 import com.thangoghd.thapcamtv.api.ApiManager;
 import com.thangoghd.thapcamtv.response.ReplayLinkResponse;
 

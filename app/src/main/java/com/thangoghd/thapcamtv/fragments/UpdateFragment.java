@@ -1,4 +1,4 @@
-package com.thangoghd.thapcamtv;
+package com.thangoghd.thapcamtv.fragments;
 
 import android.app.DownloadManager;
 import android.content.BroadcastReceiver;
@@ -15,9 +15,11 @@ import android.widget.Button;
 import android.widget.TextView;
 import androidx.core.content.FileProvider;
 import androidx.fragment.app.Fragment;
+
+import com.thangoghd.thapcamtv.R;
 import com.thangoghd.thapcamtv.api.RetrofitClient;
 import com.thangoghd.thapcamtv.models.GitHubRelease;
-import com.thangoghd.thapcamtv.utils.UpdateManager;
+
 import java.io.File;
 import retrofit2.Call;
 import retrofit2.Callback;
