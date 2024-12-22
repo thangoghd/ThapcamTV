@@ -212,8 +212,24 @@ public class LiveFragment extends Fragment {
             return;
         }
 
-        // Remove duplicates if any (based on match ID)
-        List<Match> uniqueMatches = new ArrayList<>(new LinkedHashSet<>(allMatches));
+        // Create a map to store matches by key_sync
+        Map<String, Match> matchMap = new HashMap<>();
+
+        // Iterate over the list in the correct order (vebo first, thapcam last)
+        for (Match match : allMatches) {
+            String keySync = match.getSync();
+            if (keySync != null) {
+                // If it's football and already exists in the map, keep the vebo data (vebo priority)
+                if ("football".equals(match.getSport_type()) && matchMap.containsKey(keySync)) {
+                    continue;
+                }
+                // Otherwise, add the match to the map
+                matchMap.put(keySync, match);
+            }
+        }
+
+        // Convert the map values to a list
+        List<Match> uniqueMatches = new ArrayList<>(matchMap.values());
 
         Map<String, List<Match>> matchesBySportType = new SportRepository(null).getMatchesBySportType(uniqueMatches);
         matches = matchesBySportType.get(sportTypeKey);

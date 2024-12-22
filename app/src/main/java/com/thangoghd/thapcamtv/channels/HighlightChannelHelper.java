@@ -26,7 +26,7 @@ import com.thangoghd.thapcamtv.models.Replay;
 public class HighlightChannelHelper {
     private static final String CHANNEL_ID = "highlight_channel";
     private static final int CHANNEL_JOB_ID = 1000;
-    private static final long CHANNEL_UPDATE_INTERVAL = 1000 * 60 * 15;
+    private static final long CHANNEL_UPDATE_INTERVAL = 3600000;
     private static final String COLUMN_CHANNEL_ID = "channel_id";
     private static final String COLUMN_TITLE = "title";
     private static final String COLUMN_TYPE = "type";
@@ -127,11 +127,11 @@ public class HighlightChannelHelper {
             values
         );
         
-        if (programUri != null) {
-            Log.d("HighlightChannel", "Added program: " + replay.getName());
-        } else {
-            Log.e("HighlightChannel", "Failed to add program: " + replay.getName());
-        }
+//        if (programUri != null) {
+//            Log.d("HighlightChannel", "Added program: " + replay.getName());
+//        } else {
+//            Log.e("HighlightChannel", "Failed to add program: " + replay.getName());
+//        }
     }
 
     private static Intent createProgramIntent(String replayId) {

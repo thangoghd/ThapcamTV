@@ -28,6 +28,3 @@ public interface SportApi {
     @GET("api/news/vebotv/search/{link}/{query}")
     Call<ReplayResponse> searchReplays(@Path("link") String link, @Path("query") String query);
 }
-
-
-
