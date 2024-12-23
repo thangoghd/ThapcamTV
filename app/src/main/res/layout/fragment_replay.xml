@@ -37,12 +37,14 @@
 
         <Button
             android:id="@+id/searchButton"
+            style="?android:attr/buttonBarButtonStyle"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Tìm" />
 
         <Button
             android:id="@+id/deleteButton"
+            style="?android:attr/buttonBarButtonStyle"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Xoá" />
@@ -63,18 +65,20 @@
 
         <Button
             android:id="@+id/firstPage"
+            style="?android:attr/buttonBarButtonStyle"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:drawableStart="@drawable/ic_firstpage"
-            android:paddingStart="30dp" />
+            android:paddingStart="25dp" />
 
         <Button
             android:id="@+id/previousPage"
+            style="?android:attr/buttonBarButtonStyle"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:drawableStart="@drawable/ic_previouspage"
             android:drawableTint="@android:color/white"
-            android:paddingStart="30dp" />
+            android:paddingStart="25dp" />
 
         <TextView
             android:id="@+id/currentPage"
@@ -95,22 +99,24 @@
 
         <Button
             android:id="@+id/nextPage"
+            style="?android:attr/buttonBarButtonStyle"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:drawableStart="@drawable/ic_nextpage"
             android:drawableTint="@android:color/white"
-            android:paddingStart="30dp" />
+            android:paddingStart="25dp" />
 
         <Button
             android:id="@+id/lastPage"
+            style="?android:attr/buttonBarButtonStyle"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:drawableStart="@drawable/ic_lastpage"
-            android:paddingStart="30dp" />
+            android:paddingStart="25dp" />
 
         <EditText
             android:id="@+id/pageInput"
-            android:layout_width="50dp"
+            android:layout_width="80dp"
             android:layout_height="wrap_content"
             android:hint="Tới trang"
             android:imeOptions="actionSearch"
@@ -118,6 +124,7 @@
 
         <Button
             android:id="@+id/goToPage"
+            style="?android:attr/buttonBarButtonStyle"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Đi" />
