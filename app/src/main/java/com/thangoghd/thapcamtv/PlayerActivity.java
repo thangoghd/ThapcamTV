@@ -1,8 +1,6 @@
 package com.thangoghd.thapcamtv;
 
-import android.content.BroadcastReceiver;
-import android.content.Context;
-import android.content.Intent;
+
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
@@ -12,7 +10,6 @@ import android.view.View;
 import android.view.WindowManager;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
-import android.widget.ImageButton;
 import android.widget.ProgressBar;
 import android.widget.Spinner;
 import android.widget.Toast;
@@ -218,12 +215,9 @@ public class PlayerActivity extends AppCompatActivity {
             @Override
             public void onPlayerError(PlaybackException error) {
                 Log.e("PlayerActivity", "Không thể phát video: " + error.getMessage() + " | URL: " + url);
-                String errorMessage = "Không thể phát video!";
-                if (error.getCause() instanceof com.google.android.exoplayer2.upstream.HttpDataSource.InvalidResponseCodeException) {
-                    com.google.android.exoplayer2.upstream.HttpDataSource.InvalidResponseCodeException httpError = 
-                        (com.google.android.exoplayer2.upstream.HttpDataSource.InvalidResponseCodeException) error.getCause();
-                    errorMessage = "Không thể phát video! (Mã lỗi: " + httpError.responseCode + ")";
-                }
+                String errorMessage = error.getCause() instanceof com.google.android.exoplayer2.upstream.HttpDataSource.InvalidResponseCodeException ? 
+                    "Không thể phát video! (Mã lỗi: " + ((com.google.android.exoplayer2.upstream.HttpDataSource.InvalidResponseCodeException) error.getCause()).responseCode + ")" :
+                    "Không thể phát video!";
                 Toast.makeText(PlayerActivity.this, errorMessage, Toast.LENGTH_SHORT).show();
             }
         });
@@ -290,9 +284,7 @@ public class PlayerActivity extends AppCompatActivity {
         } else {
             // For other sports, use thapcam.xyz API
             api = ApiManager.getSportApi(false); // thapcam.xyz
-            // Add "tc" prefix if not already present
-            String tcMatchId = matchId.startsWith("tc") ? matchId.substring(2) : matchId;
-            call = api.getThapcamStreamUrl(tcMatchId);
+            call = api.getThapcamStreamUrl(matchId);
         }
 
         call.enqueue(new Callback<JsonObject>() {

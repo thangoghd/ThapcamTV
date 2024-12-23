@@ -2,8 +2,6 @@ package com.thangoghd.thapcamtv;
 
 import android.animation.ValueAnimator;
 import android.content.Context;
-import android.content.Intent;
-import android.net.Uri;
 import android.os.Bundle;
 import android.view.KeyEvent;
 import android.view.View;
@@ -19,13 +17,11 @@ import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 
-import com.thangoghd.thapcamtv.api.ApiManager;
 import com.thangoghd.thapcamtv.api.RetrofitClient;
 import com.thangoghd.thapcamtv.fragments.FullMatchFragment;
 import com.thangoghd.thapcamtv.fragments.HighlightFragment;
 import com.thangoghd.thapcamtv.fragments.LiveFragment;
 import com.thangoghd.thapcamtv.fragments.UpdateFragment;
-import com.thangoghd.thapcamtv.response.ReplayLinkResponse;
 import com.thangoghd.thapcamtv.utils.UpdateManager;
 import com.thangoghd.thapcamtv.models.GitHubRelease;
 
@@ -127,7 +123,7 @@ public class MainActivity extends FragmentActivity implements View.OnKeyListener
             if (lastBackPressTime + DOUBLE_BACK_PRESS_INTERVAL > System.currentTimeMillis()) {
                 super.onBackPressed();
             } else {
-                exitToast = Toast.makeText(this, "Press back again to exit", Toast.LENGTH_SHORT);
+                exitToast = Toast.makeText(this, "Nhấn lại lần nữa để thoát", Toast.LENGTH_SHORT);
                 exitToast.show();
             }
             lastBackPressTime = System.currentTimeMillis();

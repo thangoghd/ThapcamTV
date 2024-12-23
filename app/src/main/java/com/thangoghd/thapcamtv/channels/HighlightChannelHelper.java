@@ -10,14 +10,12 @@ import android.content.Intent;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.media.tv.TvContract;
 import android.net.Uri;
 import android.os.Build;
 import android.util.Log;
 
 import androidx.tvprovider.media.tv.Channel;
 import androidx.tvprovider.media.tv.ChannelLogoUtils;
-import androidx.tvprovider.media.tv.PreviewProgram;
 import androidx.tvprovider.media.tv.TvContractCompat;
 
 import com.thangoghd.thapcamtv.R;

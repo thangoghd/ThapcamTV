@@ -10,8 +10,8 @@ android {
         applicationId = "com.thangoghd.thapcamtv"
         minSdk = 24
         targetSdk = 34
-        versionCode = 6
-        versionName = "1.1.0"
+        versionCode = 7
+        versionName = "1.1.1"
 
     }
 
@@ -40,8 +40,6 @@ dependencies {
     implementation("com.squareup.retrofit2:converter-gson:2.11.0")
     // https://mvnrepository.com/artifact/com.squareup.okhttp3/logging-interceptor
     implementation("com.squareup.okhttp3:logging-interceptor:5.0.0-alpha.14")
-    // AndroidX Leanback for TV UI components
-    implementation ("androidx.leanback:leanback:1.0.0")
     // https://mvnrepository.com/artifact/com.google.code.gson/gson
     implementation("com.google.code.gson:gson:2.11.0")
     // https://mvnrepository.com/artifact/com.google.android.exoplayer/exoplayer
