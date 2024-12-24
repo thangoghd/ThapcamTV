@@ -189,6 +189,7 @@ public class LiveChannelHelper {
         intent.putExtra("is_loading", true);
         intent.putExtra("match_id", match.getId());
         intent.putExtra("sport_type", match.getSport_type());
+        intent.putExtra("from", match.getFrom());
         
         // Convert intent to URI string with all flags preserved
         String intentUri = intent.toUri(Intent.URI_INTENT_SCHEME);
@@ -207,6 +208,7 @@ public class LiveChannelHelper {
         intent.putExtra("is_loading", true);
         intent.putExtra("match_id", match.getId());
         intent.putExtra("sport_type", match.getSport_type());
+        intent.putExtra("from", match.getFrom());
 
         return PendingIntent.getActivity(
             context,

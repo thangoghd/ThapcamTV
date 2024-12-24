@@ -1,6 +1,5 @@
 package com.thangoghd.thapcamtv;
 
-
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
@@ -96,7 +95,7 @@ public class PlayerActivity extends AppCompatActivity {
 
         Log.d("PlayerActivity", "onCreate - sourceType: " + sourceType + 
               ", matchId: " + matchId + ", sportType: " + sportType + 
-              ", isLoading: " + isLoading);
+              ", isLoading: " + isLoading + ", from: " + getIntent().getStringExtra("from"));
 
         if (isLoading && matchId != null) {
             showLoading(true);
@@ -276,13 +275,13 @@ public class PlayerActivity extends AppCompatActivity {
         
         SportApi api;
         Call<JsonObject> call;
-
-        // If it's football, use vebo.xyz API
-        if ("football".equals(sportType)) {
+        
+        String from = getIntent().getStringExtra("from");
+        if ("vebo".equals(from)) {
             api = ApiManager.getSportApi(true); // vebo.xyz
             call = api.getVeboStreamUrl(matchId);
         } else {
-            // For other sports, use thapcam.xyz API
+            // Default to thapcam.xyz API
             api = ApiManager.getSportApi(false); // thapcam.xyz
             call = api.getThapcamStreamUrl(matchId);
         }
@@ -297,7 +296,7 @@ public class PlayerActivity extends AppCompatActivity {
                         parseJsonAndStartPlayer(jsonResponse);
                     } catch (Exception e) {
                         Log.e("PlayerActivity", "Error parsing stream URL response", e);
-                        showError("Có lỗi xảy ra khi tải dữ liệu.");
+                        showError("Có lỗi xảy ra khi tải dữ liệu");
                     }
                 } else {
                     Log.e("PlayerActivity", "Stream URL API error: " + response.code());

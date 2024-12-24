@@ -18,6 +18,7 @@ public class Match {
     private List<Commentator> commentators;
     private boolean is_live;
     private String time_str;
+    private String from;
 
 
     public String getId() {
@@ -129,5 +130,9 @@ public class Match {
     public String getTimeInMatch(){return time_str;}
 
     public void setTimeInMatch(String time_str){this.time_str = time_str;}
+
+    public String getFrom(){return from;}
+
+    public void setFrom(String from){this.from = from;}
 }
 

@@ -66,6 +66,7 @@ public class LiveFragment extends Fragment {
     public int focusedPosition = RecyclerView.NO_POSITION;
     private Map<String, List<Match>> matchesCache = new HashMap<>(); // Add cache for matches
     private View loadingView; // Add loading view reference
+    private List<Match> allMatches; // Store all matches from both APIs
 
     @Nullable
     @Override
@@ -147,7 +148,7 @@ public class LiveFragment extends Fragment {
         SportRepository veboRepository = new SportRepository(veboApi);
         SportRepository thapcamRepository = new SportRepository(thapcamApi);
 
-        final List<Match> allMatches = new ArrayList<>();
+        allMatches = new ArrayList<>();
         final AtomicInteger completedCalls = new AtomicInteger(0);
 
         // Load matches from vebo.xyz
@@ -161,6 +162,9 @@ public class LiveFragment extends Fragment {
 
                 // Add vebo matches first (priority)
                 synchronized (allMatches) {
+                    for (Match match : result) {
+                        match.setFrom("vebo");
+                    }
                     allMatches.addAll(result);
                 }
 
@@ -190,6 +194,9 @@ public class LiveFragment extends Fragment {
 
                 // Add thapcam matches after vebo matches
                 synchronized (allMatches) {
+                    for (Match match : result) {
+                        match.setFrom("thapcam");
+                    }
                     allMatches.addAll(result);
                 }
 
@@ -385,36 +392,35 @@ public class LiveFragment extends Fragment {
     }
 
     private void fetchMatchStreamUrl(String matchId) {
+        Match selectedMatch = null;
+        for (Match match : allMatches) {
+            if (match.getId().equals(matchId)) {
+                selectedMatch = match;
+                break;
+            }
+        }
+
         // Start PlayerActivity immediately with loading state
         Intent intent = new Intent(getContext(), PlayerActivity.class);
         intent.putExtra("source_type", "live");
         intent.putExtra("is_loading", true);
         intent.putExtra("match_id", matchId);
+        intent.putExtra("sport_type", selectedMatch != null ? selectedMatch.getSport_type() : "");
+        intent.putExtra("from", selectedMatch != null ? selectedMatch.getFrom() : "");
         startActivity(intent);
 
         SportApi api;
         Call<JsonObject> call;
 
-        // Find the match to determine its sport type
-        Match currentMatch = null;
-        if (matches != null) {
-            for (Match match : matches) {
-                if (match.getId().equals(matchId)) {
-                    currentMatch = match;
-                    break;
-                }
-            }
-        }
-
-        // If it's football, use vebo.xyz API
-        if (currentMatch != null && "football".equals(currentMatch.getSport_type())) {
+        if ("vebo".equals(selectedMatch.getFrom())) {
             api = ApiManager.getSportApi(true); // vebo.xyz
             call = api.getVeboStreamUrl(matchId);
         } else {
-            // For other sports, use thapcam.xyz API
+            // Default to thapcam.xyz API
             api = ApiManager.getSportApi(false); // thapcam.xyz
             call = api.getThapcamStreamUrl(matchId);
         }
+
 
         call.enqueue(new retrofit2.Callback<JsonObject>() {
             @Override

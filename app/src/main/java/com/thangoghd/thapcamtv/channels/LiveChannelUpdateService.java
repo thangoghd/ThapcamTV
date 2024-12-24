@@ -85,6 +85,9 @@ public class LiveChannelUpdateService extends JobService {
                     // Add vebo matches first (priority)
                     synchronized (allMatches) {
                         if (result != null) {
+                            for (Match match : result) {
+                                match.setFrom("vebo");
+                            }
                             allMatches.addAll(result);
                             Log.d("LiveChannelUpdateService", "Total matches after vebo: " + allMatches.size());
                         }
@@ -117,6 +120,9 @@ public class LiveChannelUpdateService extends JobService {
                     // Add thapcam matches after vebo matches
                     synchronized (allMatches) {
                         if (result != null) {
+                            for (Match match : result) {
+                                match.setFrom("thapcam");
+                            }
                             allMatches.addAll(result);
                             Log.d("LiveChannelUpdateService", "Total matches after thapcam: " + allMatches.size());
                         }
