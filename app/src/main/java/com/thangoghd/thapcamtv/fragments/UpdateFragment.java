@@ -32,7 +32,7 @@ public class UpdateFragment extends Fragment {
     private Button btnUpdate;
     private View rootView;
     private GitHubRelease currentRelease;
-
+    private BroadcastReceiver downloadReceiver;
     private static final int REQUEST_INSTALL_PERMISSION = 1001;
     private String pendingDownloadUrl = null;
 
@@ -271,20 +271,27 @@ public class UpdateFragment extends Fragment {
                 });
             }).start();
             
-            BroadcastReceiver onComplete = new BroadcastReceiver() {
+            downloadReceiver = new BroadcastReceiver() {
                 @Override
                 public void onReceive(Context context, Intent intent) {
                     if (DownloadManager.ACTION_DOWNLOAD_COMPLETE.equals(intent.getAction())) {
                         long id = intent.getLongExtra(DownloadManager.EXTRA_DOWNLOAD_ID, -1);
                         if (id == downloadId) {
                             installUpdate();
-                            context.unregisterReceiver(this);
+                            if (context != null) {
+                                try {
+                                    context.unregisterReceiver(this);
+                                    downloadReceiver = null;
+                                } catch (Exception e) {
+                                    e.printStackTrace();
+                                }
+                            }
                         }
                     }
                 }
             };
             
-            requireContext().registerReceiver(onComplete, 
+            requireContext().registerReceiver(downloadReceiver, 
                 new IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE));
             
         } catch (Exception e) {
@@ -307,6 +314,19 @@ public class UpdateFragment extends Fragment {
             
         } catch (Exception e) {
             e.printStackTrace();
+        }
+    }
+
+    @Override
+    public void onDestroyView() {
+        super.onDestroyView();
+        if (downloadReceiver != null) {
+            try {
+                requireContext().unregisterReceiver(downloadReceiver);
+                downloadReceiver = null;
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         }
     }
 }
