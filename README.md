@@ -34,7 +34,8 @@ ThapCamTV là ứng dụng Android TV cho phép bạn xem trực tiếp các s�
 
 ## 📥 Cài đặt
 
-Tải phiên bản mới nhất tại: [Latest Release](https://github.com/thangoghd/ThapcamTV/releases/latest)
+- Tải phiên bản mới nhất tại: [Latest Release](https://github.com/thangoghd/ThapcamTV/releases/latest)
+- Xem hướng dẫn cài đặt tại: [YouTube Video](https://youtu.be/CntT4eMumHw)
 
 ## 🔄 Cập nhật
 
