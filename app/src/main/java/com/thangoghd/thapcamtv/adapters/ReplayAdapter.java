@@ -12,8 +12,11 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.thangoghd.thapcamtv.R;
 import com.thangoghd.thapcamtv.models.Replay;
 import com.bumptech.glide.Glide;
+import com.thangoghd.thapcamtv.response.ReplayResponse;
 
 import java.util.List;
+
+import retrofit2.Callback;
 
 public class ReplayAdapter extends RecyclerView.Adapter<ReplayAdapter.HighlightViewHolder> {
     private List<Replay> replays;

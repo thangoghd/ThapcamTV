@@ -27,4 +27,13 @@ public interface SportApi {
 
     @GET("api/news/vebotv/search/{link}/{query}")
     Call<ReplayResponse> searchReplays(@Path("link") String link, @Path("query") String query);
+
+    @GET("api/news/thapcam/list/xemlai/{page}")
+    Call<ReplayResponse> getFullMatchesThapcam(@Path("page") int page);
+
+    @GET("api/news/thapcam/detail/{id}")
+    Call<ReplayLinkResponse> getFullMatchesDetailsFromThapcam(@Path("id") String id);
+
+    @GET("api/news/thapcam/search/xemlai/{query}")
+    Call<ReplayResponse> searchReplaysFromThapcam(@Path("query") String query);
 }

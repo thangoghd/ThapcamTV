@@ -21,6 +21,7 @@ import com.thangoghd.thapcamtv.api.RetrofitClient;
 import com.thangoghd.thapcamtv.fragments.FullMatchFragment;
 import com.thangoghd.thapcamtv.fragments.HighlightFragment;
 import com.thangoghd.thapcamtv.fragments.LiveFragment;
+import com.thangoghd.thapcamtv.fragments.ReplayThapcamFragment;
 import com.thangoghd.thapcamtv.fragments.UpdateFragment;
 import com.thangoghd.thapcamtv.utils.UpdateManager;
 import com.thangoghd.thapcamtv.models.GitHubRelease;
@@ -34,7 +35,8 @@ public class MainActivity extends FragmentActivity implements View.OnKeyListener
 
     private LinearLayout btnLive;
     private LinearLayout btnHighlight;
-    private LinearLayout btnReplay;
+    private LinearLayout btnFullMatch;
+    private LinearLayout btnFullMatchThapcam;
     private LinearLayout btnCheckUpdate;
     private LinearLayout lastSelectedMenu;
 
@@ -49,7 +51,8 @@ public class MainActivity extends FragmentActivity implements View.OnKeyListener
         navBar = findViewById(R.id.blfNavBar);
         btnLive = findViewById(R.id.navLive);
         btnHighlight = findViewById(R.id.navHighlight);
-        btnReplay = findViewById(R.id.navFullMatch);
+        btnFullMatch = findViewById(R.id.navFullMatch);
+        btnFullMatchThapcam = findViewById(R.id.navFullMatchThapcam);
         btnCheckUpdate = findViewById(R.id.navCheckUpdate);
         
         // Ẩn nút Check Update mặc định
@@ -58,7 +61,8 @@ public class MainActivity extends FragmentActivity implements View.OnKeyListener
         navBar.setOnKeyListener(this);
         btnLive.setOnKeyListener(this);
         btnHighlight.setOnKeyListener(this);
-        btnReplay.setOnKeyListener(this);
+        btnFullMatch.setOnKeyListener(this);
+        btnFullMatchThapcam.setOnKeyListener(this);
         btnCheckUpdate.setOnKeyListener(this);
 
         lastSelectedMenu = btnLive;
@@ -83,8 +87,11 @@ public class MainActivity extends FragmentActivity implements View.OnKeyListener
                 animateMenu(btnHighlight);
             } else if (view.getId() == R.id.navFullMatch) {
                 changeFragment(new FullMatchFragment());
-                animateMenu(btnReplay);
-            } else if (view.getId() == R.id.navCheckUpdate) {
+                animateMenu(btnFullMatch);
+            } else if (view.getId() == R.id.navFullMatchThapcam) {
+                changeFragment(new ReplayThapcamFragment());
+                animateMenu(btnFullMatchThapcam);
+            }else if (view.getId() == R.id.navCheckUpdate) {
                 changeFragment(new UpdateFragment());
                 animateMenu(btnCheckUpdate);
             }

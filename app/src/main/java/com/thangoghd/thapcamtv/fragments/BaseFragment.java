@@ -1,4 +1,4 @@
-package com.thangoghd.thapcamtv;
+package com.thangoghd.thapcamtv.fragments;
 
 import android.content.Context;
 import android.os.Bundle;
@@ -19,6 +19,7 @@ import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.thangoghd.thapcamtv.R;
 import com.thangoghd.thapcamtv.adapters.ReplayAdapter;
 import com.thangoghd.thapcamtv.api.ApiManager;
 import com.thangoghd.thapcamtv.cache.ReplayCache;
