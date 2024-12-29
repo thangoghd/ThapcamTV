@@ -328,5 +328,6 @@ public class UpdateFragment extends Fragment {
                 e.printStackTrace();
             }
         }
+        rootView = null;
     }
 }

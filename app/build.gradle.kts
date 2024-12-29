@@ -44,6 +44,8 @@ dependencies {
     implementation("com.google.code.gson:gson:2.11.0")
     // https://mvnrepository.com/artifact/com.google.android.exoplayer/exoplayer
     implementation("com.google.android.exoplayer:exoplayer:2.19.1")
+    // https://mvnrepository.com/artifact/com.google.android.exoplayer/exoplayer-ui
+    implementation("com.google.android.exoplayer:exoplayer-ui:2.19.1")
     implementation(libs.androidx.appcompat)
     implementation(libs.material)
     // https://mvnrepository.com/artifact/androidx.tvprovider/tvprovider

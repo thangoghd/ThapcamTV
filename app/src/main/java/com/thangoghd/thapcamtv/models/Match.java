@@ -69,7 +69,7 @@ public class Match {
         this.timestamp = timestamp;
     }
 
-    public String getMatch_status() {
+    public String getMatchStatus() {
         return match_status;
     }
 
@@ -109,7 +109,7 @@ public class Match {
         this.scores = scores;
     }
 
-    public String getSport_type() {
+    public String getSportType() {
         return sport_type;
     }
 

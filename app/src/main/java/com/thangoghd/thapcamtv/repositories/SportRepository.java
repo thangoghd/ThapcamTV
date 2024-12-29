@@ -31,10 +31,6 @@ public class SportRepository {
         this.api = api;
     }
 
-    public boolean isUsingVeboApi() {
-        return api == ApiManager.getSportApi(true);
-    }
-
     public void getLiveMatches(final RepositoryCallback<List<Match>> callback) {
         api.getLiveMatches().enqueue(new Callback<MatchResponse>() {
             @Override
@@ -65,15 +61,15 @@ public class SportRepository {
         
         // Group matches by sport type
         for (Match match : matches) {
-            if (!"finished".equalsIgnoreCase(match.getMatch_status()) && 
-                !"canceled".equalsIgnoreCase(match.getMatch_status())) {
+            if (!"finished".equalsIgnoreCase(match.getMatchStatus()) &&
+                !"canceled".equalsIgnoreCase(match.getMatchStatus())) {
                 
                 // Add to live matches if it's live
                 if (match.getLive()) {
                     liveMatches.add(match);
                 }
                 
-                tempGroupedMatches.computeIfAbsent(match.getSport_type(), k -> new ArrayList<>()).add(match);
+                tempGroupedMatches.computeIfAbsent(match.getSportType(), k -> new ArrayList<>()).add(match);
             }
         }
         
@@ -82,8 +78,8 @@ public class SportRepository {
             // Sort live matches by sport type priority first, then by tournament priority
             liveMatches.sort((m1, m2) -> {
                 // First compare by sport type priority
-                int sport1Index = SPORT_PRIORITY.indexOf(m1.getSport_type());
-                int sport2Index = SPORT_PRIORITY.indexOf(m2.getSport_type());
+                int sport1Index = SPORT_PRIORITY.indexOf(m1.getSportType());
+                int sport2Index = SPORT_PRIORITY.indexOf(m2.getSportType());
                 if (sport1Index != sport2Index) {
                     return Integer.compare(sport1Index, sport2Index);
                 }
@@ -103,13 +99,13 @@ public class SportRepository {
                 }
 
                 // Compare by match status (live)
-                if ("live".equalsIgnoreCase(m1.getMatch_status()) != "live".equalsIgnoreCase(m2.getMatch_status())) {
-                    return "live".equalsIgnoreCase(m2.getMatch_status()) ? 1 : -1;
+                if ("live".equalsIgnoreCase(m1.getMatchStatus()) != "live".equalsIgnoreCase(m2.getMatchStatus())) {
+                    return "live".equalsIgnoreCase(m2.getMatchStatus()) ? 1 : -1;
                 }
 
                 // Compare by "pending" status
-                if ("pending".equalsIgnoreCase(m1.getMatch_status()) != "pending".equalsIgnoreCase(m2.getMatch_status())) {
-                    return "pending".equalsIgnoreCase(m2.getMatch_status()) ? 1 : -1;
+                if ("pending".equalsIgnoreCase(m1.getMatchStatus()) != "pending".equalsIgnoreCase(m2.getMatchStatus())) {
+                    return "pending".equalsIgnoreCase(m2.getMatchStatus()) ? 1 : -1;
                 }
 
                 // Compare by priority

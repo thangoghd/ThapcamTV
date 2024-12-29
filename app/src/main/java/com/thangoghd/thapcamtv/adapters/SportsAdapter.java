@@ -16,6 +16,8 @@ import com.thangoghd.thapcamtv.SportType;
 public class SportsAdapter extends RecyclerView.Adapter<SportsAdapter.ViewHolder> {
     private SportType[] sportTypes;
     private final OnSportClickListener listener;
+    private long lastClickTime = 0;
+    private static final long CLICK_DELAY = 500; // 500ms delay between clicks
 
     public interface OnSportClickListener {
         void onSportClick(int index);
@@ -43,7 +45,13 @@ public class SportsAdapter extends RecyclerView.Adapter<SportsAdapter.ViewHolder
             Log.d("SportAdapter", "Focus changed on position: " + holder.getAdapterPosition() + " hasFocus: " + hasFocus);
         });
 
-        holder.itemView.setOnClickListener(v -> listener.onSportClick(position));
+        holder.itemView.setOnClickListener(v -> {
+            long currentTime = System.currentTimeMillis();
+            if (currentTime - lastClickTime >= CLICK_DELAY) {
+                lastClickTime = currentTime;
+                listener.onSportClick(position);
+            }
+        });
     }
 
     @Override

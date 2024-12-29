@@ -61,7 +61,7 @@ public class LiveFragment extends Fragment {
     private boolean isInitialLoad = true; // Add a variable to track the first load
     private ImageView backgroundImageView;
     private final Handler refreshHandler = new Handler(Looper.getMainLooper());
-    private final long REFRESH_INTERVAL = 30000; // 30 seconds
+    private final long REFRESH_INTERVAL = 10000;
     private Runnable refreshRunnable;
     public int focusedPosition = RecyclerView.NO_POSITION;
     private Map<String, List<Match>> matchesCache = new HashMap<>(); // Add cache for matches
@@ -348,11 +348,11 @@ public class LiveFragment extends Fragment {
                                 // Only update necessary information
                                 if (!currentMatch.getScores().equals(newMatch.getScores()) ||
                                         !currentMatch.getTimeInMatch().equals(newMatch.getTimeInMatch()) ||
-                                        !currentMatch.getMatch_status().equals(newMatch.getMatch_status())) {
+                                        !currentMatch.getMatchStatus().equals(newMatch.getMatchStatus())) {
 
                                     currentMatch.setScores(newMatch.getScores());
                                     currentMatch.setTimeInMatch(newMatch.getTimeInMatch());
-                                    currentMatch.setMatch_status(newMatch.getMatch_status());
+                                    currentMatch.setMatch_status(newMatch.getMatchStatus());
 
                                     updatedIndices.add(i);
                                 }
@@ -405,8 +405,9 @@ public class LiveFragment extends Fragment {
         intent.putExtra("source_type", "live");
         intent.putExtra("is_loading", true);
         intent.putExtra("match_id", matchId);
-        intent.putExtra("sport_type", selectedMatch != null ? selectedMatch.getSport_type() : "");
-        intent.putExtra("from", selectedMatch != null ? selectedMatch.getFrom() : "");
+        intent.putExtra("sport_type", selectedMatch.getSportType());
+        intent.putExtra("sync_key", selectedMatch.getSync() != null ? selectedMatch.getSync() : matchId);
+        intent.putExtra("from", selectedMatch.getFrom());
         startActivity(intent);
 
         SportApi api;
@@ -432,7 +433,7 @@ public class LiveFragment extends Fragment {
                     try{
                         parseJsonAndStartPlayer(jsonResponse, true);
                     } catch (Exception e) {
-                        Toast.makeText(getContext(), "Có lỗi xảy ra khi tải luồng từ Thapcam.", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(getContext(), "Có lỗi xảy ra khi tải luồng.", Toast.LENGTH_SHORT).show();
                     }
                 }
             }

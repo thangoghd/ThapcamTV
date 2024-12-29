@@ -170,8 +170,8 @@ public class LiveChannelUpdateService extends JobService {
             for (List<Match> sportMatches : matchesBySportType.values()) {
                 for (Match match : sportMatches) {
                     if (match.getLive() && 
-                        !"finished".equalsIgnoreCase(match.getMatch_status()) && 
-                        !"canceled".equalsIgnoreCase(match.getMatch_status())) {
+                        !"finished".equalsIgnoreCase(match.getMatchStatus()) &&
+                        !"canceled".equalsIgnoreCase(match.getMatchStatus())) {
                         liveMatches.add(match);
                     }
                 }
@@ -181,8 +181,8 @@ public class LiveChannelUpdateService extends JobService {
             liveMatches.sort((m1, m2) -> {
                 // First compare by sport type priority
                 List<String> SPORT_PRIORITY = Arrays.asList("live", "football", "basketball", "esports", "tennis", "volleyball", "badminton", "race", "pool", "wwe", "event", "other");
-                int sport1Index = SPORT_PRIORITY.indexOf(m1.getSport_type());
-                int sport2Index = SPORT_PRIORITY.indexOf(m2.getSport_type());
+                int sport1Index = SPORT_PRIORITY.indexOf(m1.getSportType());
+                int sport2Index = SPORT_PRIORITY.indexOf(m2.getSportType());
                 if (sport1Index != sport2Index) {
                     return Integer.compare(sport1Index, sport2Index);
                 }
@@ -208,8 +208,7 @@ public class LiveChannelUpdateService extends JobService {
                     LiveChannelHelper.addProgramToChannel(jobService, channelId, match);
                     addedMatchIds.add(match.getId());
                     addedCount++;
-                    
-                    Log.d("LiveChannelUpdateService", "Added match to channel: " + match.getHome().getName() + " vs " + match.getAway() != null ? match.getAway().getName() : "Unknown" + " [" + match.getSport_type() + "]");
+
                 } catch (Exception e) {
                     Log.e("LiveChannelUpdateService", "Error adding match to channel", e);
                 }

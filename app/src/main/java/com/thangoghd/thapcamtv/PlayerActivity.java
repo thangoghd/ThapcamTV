@@ -5,13 +5,20 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
+import android.util.TypedValue;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
+import android.widget.ImageButton;
+import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.Spinner;
 import android.widget.Toast;
+
+import android.webkit.WebView;
+import android.webkit.WebViewClient;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -20,8 +27,8 @@ import com.google.android.exoplayer2.ExoPlayer;
 import com.google.android.exoplayer2.MediaItem;
 import com.google.android.exoplayer2.PlaybackException;
 import com.google.android.exoplayer2.Player;
-import com.google.android.exoplayer2.source.hls.HlsMediaSource;
 import com.google.android.exoplayer2.ui.PlayerView;
+import com.google.android.exoplayer2.source.hls.HlsMediaSource;
 import com.google.android.exoplayer2.upstream.DefaultHttpDataSource;
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
@@ -41,19 +48,22 @@ import java.util.Map;
 
 public class PlayerActivity extends AppCompatActivity {
 
-    public static final String ACTION_STREAM_READY = "com.thangoghd.thapcamtv.STREAM_READY";
     private static PlayerActivity instance;
     private ExoPlayer player;
     private PlayerView playerView;
     private Map<String, String> qualityMap;
     private Spinner qualitySpinner;
     private ProgressBar loadingProgressBar;
+    private WebView commentsWebView;
+    private ImageButton chatToggleButton;
+    private boolean isChatVisible = false;
 
-    private Handler hideHandler = new Handler(Looper.getMainLooper());
-    private Runnable hideRunnable = new Runnable() {
+    private final Handler hideHandler = new Handler(Looper.getMainLooper());
+    private final Runnable hideRunnable = new Runnable() {
         @Override
         public void run() {
             qualitySpinner.setVisibility(View.INVISIBLE);
+            chatToggleButton.setVisibility(View.INVISIBLE);
         }
     };
 
@@ -72,6 +82,8 @@ public class PlayerActivity extends AppCompatActivity {
         playerView = findViewById(R.id.player_view);
         qualitySpinner = findViewById(R.id.quality_spinner);
         loadingProgressBar = findViewById(R.id.loading_progress);
+        commentsWebView = findViewById(R.id.comments_webview);
+        chatToggleButton = findViewById(R.id.chat_toggle_button);
 
         String videoUrl = getIntent().getStringExtra("replay_url");
         String sourceType = getIntent().getStringExtra("source_type");
@@ -106,6 +118,7 @@ public class PlayerActivity extends AppCompatActivity {
 
         if (!showQualitySpinner) {
             qualitySpinner.setVisibility(View.GONE);
+            chatToggleButton.setVisibility(View.GONE);
         }
 
         qualitySpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
@@ -132,6 +145,7 @@ public class PlayerActivity extends AppCompatActivity {
             showLoading(false);
             if (streamUrls != null && !streamUrls.isEmpty()) {
                 this.qualityMap = streamUrls;
+                setupChatToggle();
                 setupQualitySpinner();
             } else {
                 showError("Không có luồng phát sóng.");
@@ -167,6 +181,7 @@ public class PlayerActivity extends AppCompatActivity {
     
     private void resetHideTimer() {
         qualitySpinner.setVisibility(View.VISIBLE);
+        chatToggleButton.setVisibility(View.VISIBLE);
         hideHandler.removeCallbacks(hideRunnable);
         hideHandler.postDelayed(hideRunnable, 5000);
     }
@@ -212,7 +227,7 @@ public class PlayerActivity extends AppCompatActivity {
 
         player.addListener(new Player.Listener() {
             @Override
-            public void onPlayerError(PlaybackException error) {
+            public void onPlayerError(@NonNull PlaybackException error) {
                 Log.e("PlayerActivity", "Không thể phát video: " + error.getMessage() + " | URL: " + url);
                 String errorMessage = error.getCause() instanceof com.google.android.exoplayer2.upstream.HttpDataSource.InvalidResponseCodeException ? 
                     "Không thể phát video! (Mã lỗi: " + ((com.google.android.exoplayer2.upstream.HttpDataSource.InvalidResponseCodeException) error.getCause()).responseCode + ")" :
@@ -241,6 +256,12 @@ public class PlayerActivity extends AppCompatActivity {
         super.onDestroy();
         if (player != null) {
             player.release();
+        }
+        if (commentsWebView != null) {
+            commentsWebView.stopLoading();
+            commentsWebView.clearHistory();
+            commentsWebView.clearCache(true);
+            commentsWebView.destroy();
         }
     }
 
@@ -326,7 +347,7 @@ public class PlayerActivity extends AppCompatActivity {
             }
 
             JsonArray playUrls = data.getAsJsonArray("play_urls");
-            if (playUrls == null || playUrls.size() == 0) {
+            if (playUrls == null || playUrls.isEmpty()) {
                 Log.w("PlayerActivity", "Empty play URLs array");
                 showError("Trận đấu chưa được phát sóng.");
                 return;
@@ -382,6 +403,46 @@ public class PlayerActivity extends AppCompatActivity {
                 Log.e("PlayerActivity", "Highlight video API call failed", t);
                 showError("Error: " + t.getMessage());
             }
+        });
+    }
+
+    private void setupChatToggle() {
+        ViewGroup.LayoutParams spinnerParams = qualitySpinner.getLayoutParams();
+        
+        chatToggleButton.setOnClickListener(v -> {
+            isChatVisible = !isChatVisible;
+            chatToggleButton.setImageResource(isChatVisible ? 
+                R.drawable.option_chat_disable : R.drawable.option_chat_enable);
+            spinnerParams.width = isChatVisible ? (int) TypedValue.applyDimension(
+                TypedValue.COMPLEX_UNIT_DIP, 50, getResources().getDisplayMetrics()) : ViewGroup.LayoutParams.MATCH_PARENT;
+
+            if (isChatVisible) {
+                // Get sync key from intent
+                String syncKey = getIntent().getStringExtra("sync_key");
+                String chatUrl = String.format("https://chat.vebotv.me/?room=%s",
+                        syncKey);
+
+                // Setup WebView only when becoming visible
+                commentsWebView.getSettings().setJavaScriptEnabled(true);
+                commentsWebView.setWebViewClient(new WebViewClient());
+                commentsWebView.loadUrl(chatUrl);
+                commentsWebView.setVisibility(View.VISIBLE);
+                Log.d("PlayerActivity", "Loading chat URL: " + chatUrl);
+                
+            } else {
+                // Clean up WebView when hidden
+                commentsWebView.stopLoading();
+                commentsWebView.loadUrl("about:blank");
+                commentsWebView.clearHistory();
+                commentsWebView.clearCache(true);
+                commentsWebView.setVisibility(View.GONE);
+            }
+            
+            // Adjust player container weight
+            View playerContainer = findViewById(R.id.player_container);
+            LinearLayout.LayoutParams params = (LinearLayout.LayoutParams) playerContainer.getLayoutParams();
+            params.weight = isChatVisible ? 0.9f : 1.0f;
+            playerContainer.setLayoutParams(params);
         });
     }
 }

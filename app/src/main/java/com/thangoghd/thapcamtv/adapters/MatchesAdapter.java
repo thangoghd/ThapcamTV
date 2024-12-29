@@ -91,7 +91,7 @@ public class MatchesAdapter extends RecyclerView.Adapter<MatchesAdapter.MatchVie
             TextView tournamentNameView = view.findViewById(R.id.tournamentName);
             // Add sport emoji before tournament name for live sport type
             if (match.getTournament() != null) {
-                SportType sportType = SportType.fromKey(match.getSport_type());
+                SportType sportType = SportType.fromKey(match.getSportType());
                 String tournamentText = sportType.getEmoji() + " " + match.getTournament().getName();
                 tournamentNameView.setText(tournamentText);
             } else {
@@ -141,7 +141,7 @@ public class MatchesAdapter extends RecyclerView.Adapter<MatchesAdapter.MatchVie
             }
 
             // Set match status
-            if ("live".equalsIgnoreCase(match.getMatch_status())) {
+            if ("live".equalsIgnoreCase(match.getMatchStatus())) {
                 if(match.getTimeInMatch() != null)
                 {
                     statusView.setText(match.getTimeInMatch());
@@ -152,11 +152,11 @@ public class MatchesAdapter extends RecyclerView.Adapter<MatchesAdapter.MatchVie
                     statusView.setTextColor(ContextCompat.getColor(view.getContext(), android.R.color.holo_green_light));
                 }
 
-            } else if ("finished".equalsIgnoreCase(match.getMatch_status())) {
+            } else if ("finished".equalsIgnoreCase(match.getMatchStatus())) {
                 statusView.setText(view.getContext().getString(R.string.match_finished));
                 statusView.setTextColor(ContextCompat.getColor(view.getContext(), android.R.color.holo_red_light));
 
-            } else if ("canceled".equalsIgnoreCase(match.getMatch_status())) {
+            } else if ("canceled".equalsIgnoreCase(match.getMatchStatus())) {
                 statusView.setText(view.getContext().getString(R.string.match_canceled));
                 statusView.setTextColor(ContextCompat.getColor(view.getContext(), android.R.color.holo_red_light));
             }
