@@ -396,10 +396,29 @@ public class LiveFragment extends Fragment {
     }
 
     private void updateMatchesUI(List<Match> newMatches) {
-        if (matches != null) {
+        if (matches != null && availableSportTypes != null && 
+            currentSportIndex >= 0 && currentSportIndex < availableSportTypes.length) {
+            
+            String currentSportType = availableSportTypes[currentSportIndex].getKey();
             List<Integer> updatedIndices = new ArrayList<>();
 
-            for (Match newMatch : newMatches) {
+            // Filter matches by current sport type
+            List<Match> filteredMatches = new ArrayList<>();
+            for (Match match : newMatches) {
+                // If currentSportType is "live", add all live matches
+                if ("live".equals(currentSportType)) {
+                    if ("live".equalsIgnoreCase(match.getMatchStatus())) {
+                        filteredMatches.add(match);
+                    }
+                } 
+                // Otherwise, only take matches of the current sportType
+                else if (currentSportType.equals(match.getSportType())) {
+                    filteredMatches.add(match);
+                }
+            }
+
+            // Update UI with filtered matches
+            for (Match newMatch : filteredMatches) {
                 boolean found = false;
                 for (int i = 0; i < matches.size(); i++) {
                     Match currentMatch = matches.get(i);
@@ -420,10 +439,27 @@ public class LiveFragment extends Fragment {
                     }
                 }
                 
-                // If new match, add to list
+                // If it's a new match and belongs to the current sport type, add it to the list
                 if (!found) {
                     matches.add(newMatch);
                     updatedIndices.add(matches.size() - 1);
+                }
+            }
+
+            // Remove matches that no longer match the current sport type
+            for (int i = matches.size() - 1; i >= 0; i--) {
+                Match currentMatch = matches.get(i);
+                boolean shouldKeep = false;
+                
+                if ("live".equals(currentSportType)) {
+                    shouldKeep = "live".equalsIgnoreCase(currentMatch.getMatchStatus());
+                } else {
+                    shouldKeep = currentSportType.equals(currentMatch.getSportType());
+                }
+                
+                if (!shouldKeep) {
+                    matches.remove(i);
+                    matchesAdapter.notifyItemRemoved(i);
                 }
             }
 
@@ -431,11 +467,13 @@ public class LiveFragment extends Fragment {
             requireActivity().runOnUiThread(() -> {
                 // Update items that have changed
                 for (int index : updatedIndices) {
-                    matchesAdapter.notifyItemChanged(index);
+                    if (index < matches.size()) {  // Check for IndexOutOfBoundsException
+                        matchesAdapter.notifyItemChanged(index);
+                    }
                 }
 
-                // Restore focus if necessary
-                if (focusedPosition != RecyclerView.NO_POSITION) {
+                // Reset focus if needed
+                if (focusedPosition != RecyclerView.NO_POSITION && focusedPosition < matches.size()) {
                     RecyclerView.ViewHolder holder = recyclerViewMatches.findViewHolderForAdapterPosition(focusedPosition);
                     if (holder != null) {
                         holder.itemView.requestFocus();
