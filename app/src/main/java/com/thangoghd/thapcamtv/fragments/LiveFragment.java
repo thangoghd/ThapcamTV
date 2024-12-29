@@ -346,7 +346,7 @@ public class LiveFragment extends Fragment {
 
                 synchronized (combinedMatches) {
                     for (Match match : result) {
-                        if ("live".equalsIgnoreCase(match.getMatchStatus())) {
+                        if (match.getLive()) {
                             combinedMatches.add(match);
                         }
                     }
@@ -374,7 +374,7 @@ public class LiveFragment extends Fragment {
 
                 synchronized (combinedMatches) {
                     for (Match match : result) {
-                        if ("live".equalsIgnoreCase(match.getMatchStatus())) {
+                        if (match.getLive()) {
                             combinedMatches.add(match);
                         }
                     }
@@ -407,7 +407,7 @@ public class LiveFragment extends Fragment {
             for (Match match : newMatches) {
                 // If currentSportType is "live", add all live matches
                 if ("live".equals(currentSportType)) {
-                    if ("live".equalsIgnoreCase(match.getMatchStatus())) {
+                    if (match.getLive()) {
                         filteredMatches.add(match);
                     }
                 } 
@@ -452,7 +452,7 @@ public class LiveFragment extends Fragment {
                 boolean shouldKeep = false;
                 
                 if ("live".equals(currentSportType)) {
-                    shouldKeep = "live".equalsIgnoreCase(currentMatch.getMatchStatus());
+                    shouldKeep = currentMatch.getLive();
                 } else {
                     shouldKeep = currentSportType.equals(currentMatch.getSportType());
                 }
