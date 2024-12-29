@@ -55,7 +55,6 @@ public class MainActivity extends FragmentActivity implements View.OnKeyListener
         btnFullMatchThapcam = findViewById(R.id.navFullMatchThapcam);
         btnCheckUpdate = findViewById(R.id.navCheckUpdate);
         
-        // Ẩn nút Check Update mặc định
         btnCheckUpdate.setVisibility(View.GONE);
 
         navBar.setOnKeyListener(this);
@@ -70,7 +69,6 @@ public class MainActivity extends FragmentActivity implements View.OnKeyListener
 
         changeFragment(new LiveFragment());
         
-        // Khởi tạo và check update
         updateManager = new UpdateManager(this);
         checkForUpdate();
 
@@ -91,7 +89,7 @@ public class MainActivity extends FragmentActivity implements View.OnKeyListener
             } else if (view.getId() == R.id.navFullMatchThapcam) {
                 changeFragment(new ReplayThapcamFragment());
                 animateMenu(btnFullMatchThapcam);
-            }else if (view.getId() == R.id.navCheckUpdate) {
+            } else if (view.getId() == R.id.navCheckUpdate) {
                 changeFragment(new UpdateFragment());
                 animateMenu(btnCheckUpdate);
             }
@@ -114,7 +112,7 @@ public class MainActivity extends FragmentActivity implements View.OnKeyListener
                 closeMenu();
             }
         } else if (keyCode == KeyEvent.KEYCODE_DPAD_DOWN) {
-            if (btnCheckUpdate.hasFocus()) {
+            if (btnFullMatchThapcam.hasFocus()) {
                 closeMenu();
             }
         }
@@ -191,10 +189,8 @@ public class MainActivity extends FragmentActivity implements View.OnKeyListener
                         String latestVersion = release.getTagName().replace("v", "");
                         
                         if (isUpdateAvailable(currentVersion, latestVersion)) {
-                            // Hiện nút Check Update khi có bản mới
                             btnCheckUpdate.setVisibility(View.VISIBLE);
                         } else {
-                            // Ẩn nút Check Update khi đang là bản mới nhất
                             btnCheckUpdate.setVisibility(View.GONE);
                         }
                     }
@@ -202,7 +198,6 @@ public class MainActivity extends FragmentActivity implements View.OnKeyListener
                 
                 @Override
                 public void onFailure(Call<GitHubRelease> call, Throwable t) {
-                    // Ẩn nút Check Update khi có lỗi
                     btnCheckUpdate.setVisibility(View.GONE);
                 }
             });

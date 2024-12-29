@@ -3,7 +3,6 @@ import android.util.Log;
 
 import androidx.annotation.NonNull;
 
-import com.thangoghd.thapcamtv.api.ApiManager;
 import com.thangoghd.thapcamtv.api.SportApi;
 import com.thangoghd.thapcamtv.models.Match;
 import com.thangoghd.thapcamtv.response.MatchResponse;
@@ -31,7 +30,7 @@ public class SportRepository {
         this.api = api;
     }
 
-    public void getLiveMatches(final RepositoryCallback<List<Match>> callback) {
+    public void getMatches(final RepositoryCallback<List<Match>> callback) {
         api.getLiveMatches().enqueue(new Callback<MatchResponse>() {
             @Override
             public void onResponse(@NonNull Call<MatchResponse> call, @NonNull Response<MatchResponse> response) {

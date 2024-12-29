@@ -78,7 +78,7 @@ public class LiveChannelUpdateService extends JobService {
             Log.d("LiveChannelUpdateService", "Starting to fetch matches from both sources");
 
             // Load matches from vebo.xyz
-            veboRepository.getLiveMatches(new RepositoryCallback<List<Match>>() {
+            veboRepository.getMatches(new RepositoryCallback<List<Match>>() {
                 @Override
                 public void onSuccess(List<Match> result) {
                     Log.d("LiveChannelUpdateService", "Vebo matches loaded: " + (result != null ? result.size() : 0));
@@ -113,7 +113,7 @@ public class LiveChannelUpdateService extends JobService {
             });
 
             // Load matches from thapcam.xyz
-            thapcamRepository.getLiveMatches(new RepositoryCallback<List<Match>>() {
+            thapcamRepository.getMatches(new RepositoryCallback<List<Match>>() {
                 @Override
                 public void onSuccess(List<Match> result) {
                     Log.d("LiveChannelUpdateService", "Thapcam matches loaded: " + (result != null ? result.size() : 0));

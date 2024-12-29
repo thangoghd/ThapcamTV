@@ -61,7 +61,7 @@ public class LiveFragment extends Fragment {
     private boolean isInitialLoad = true; // Add a variable to track the first load
     private ImageView backgroundImageView;
     private final Handler refreshHandler = new Handler(Looper.getMainLooper());
-    private final long REFRESH_INTERVAL = 10000;
+    private final long REFRESH_INTERVAL = 30000;
     private Runnable refreshRunnable;
     public int focusedPosition = RecyclerView.NO_POSITION;
     private Map<String, List<Match>> matchesCache = new HashMap<>(); // Add cache for matches
@@ -152,7 +152,7 @@ public class LiveFragment extends Fragment {
         final AtomicInteger completedCalls = new AtomicInteger(0);
 
         // Load matches from vebo.xyz
-        veboRepository.getLiveMatches(new RepositoryCallback<List<Match>>() {
+        veboRepository.getMatches(new RepositoryCallback<List<Match>>() {
             @Override
             public void onSuccess(List<Match> result) {
                 if (!isAdded()) {
@@ -184,7 +184,7 @@ public class LiveFragment extends Fragment {
         });
 
         // Load matches from thapcam.xyz
-        thapcamRepository.getLiveMatches(new RepositoryCallback<List<Match>>() {
+        thapcamRepository.getMatches(new RepositoryCallback<List<Match>>() {
             @Override
             public void onSuccess(List<Match> result) {
                 if (!isAdded()) {
@@ -310,10 +310,7 @@ public class LiveFragment extends Fragment {
         refreshRunnable = new Runnable() {
             @Override
             public void run() {
-                if (currentSportIndex >= 0 && availableSportTypes != null &&
-                        currentSportIndex < availableSportTypes.length) {
-                    refreshMatches(availableSportTypes[currentSportIndex].getKey());
-                }
+                refreshMatches();
                 refreshHandler.postDelayed(this, REFRESH_INTERVAL);
             }
         };
@@ -331,64 +328,121 @@ public class LiveFragment extends Fragment {
         refreshHandler.removeCallbacks(refreshRunnable);
     }
 
-    private void refreshMatches(String sportTypeKey) {
-        sportRepository.getLiveMatches(new RepositoryCallback<List<Match>>() {
+    private void refreshMatches() {
+        // Create repositories for both sources
+        SportApi veboApi = ApiManager.getSportApi(true);
+        SportApi thapcamApi = ApiManager.getSportApi(false);
+        SportRepository veboRepository = new SportRepository(veboApi);
+        SportRepository thapcamRepository = new SportRepository(thapcamApi);
+
+        final List<Match> combinedMatches = new ArrayList<>();
+        final AtomicInteger completedCalls = new AtomicInteger(0);
+
+        // Load matches from vebo.xyz
+        veboRepository.getMatches(new RepositoryCallback<List<Match>>() {
             @Override
             public void onSuccess(List<Match> result) {
-                // Process the result list to update directly into `matches` without creating a new list
-                if (matches != null) {
-                    List<Integer> updatedIndices = new ArrayList<>();
+                if (!isAdded()) return;
 
-                    for (Match newMatch : result) {
-                        for (int i = 0; i < matches.size(); i++) {
-                            Match currentMatch = matches.get(i);
-
-                            // Check if the match needs to be updated
-                            if (currentMatch.getId().equals(newMatch.getId())) {
-                                // Only update necessary information
-                                if (!currentMatch.getScores().equals(newMatch.getScores()) ||
-                                        !currentMatch.getTimeInMatch().equals(newMatch.getTimeInMatch()) ||
-                                        !currentMatch.getMatchStatus().equals(newMatch.getMatchStatus())) {
-
-                                    currentMatch.setScores(newMatch.getScores());
-                                    currentMatch.setTimeInMatch(newMatch.getTimeInMatch());
-                                    currentMatch.setMatch_status(newMatch.getMatchStatus());
-
-                                    updatedIndices.add(i);
-                                }
-                                break;
-                            }
+                synchronized (combinedMatches) {
+                    for (Match match : result) {
+                        if ("live".equalsIgnoreCase(match.getMatchStatus())) {
+                            combinedMatches.add(match);
                         }
                     }
+                }
 
-                    // Update UI more efficiently
-                    requireActivity().runOnUiThread(() -> {
-                        for (int index : updatedIndices) {
-                            matchesAdapter.notifyItemChanged(index);
-                        }
-
-                        // Restore focus if necessary
-                        if (focusedPosition != RecyclerView.NO_POSITION) {
-                            RecyclerView.ViewHolder viewHolder =
-                                    recyclerViewMatches.findViewHolderForAdapterPosition(focusedPosition);
-                            if (viewHolder != null) {
-                                viewHolder.itemView.requestFocus();
-                            }
-                        }
-
-                        // Clear updatedIndices to free up temporary memory
-                        updatedIndices.clear();
-                    });
+                if (completedCalls.incrementAndGet() == 2) {
+                    updateMatchesUI(combinedMatches);
                 }
             }
 
             @Override
             public void onError(Exception e) {
-                requireActivity().runOnUiThread(() -> {
-                    Toast.makeText(getContext(), "Không thể lấy dữ liệu của các trận đấu.", Toast.LENGTH_SHORT).show();
-                });
+                Log.e("LiveFragment", "Error refreshing vebo matches", e);
+                if (completedCalls.incrementAndGet() == 2) {
+                    updateMatchesUI(combinedMatches);
+                }
             }
         });
+
+        // Load matches from thapcam.xyz
+        thapcamRepository.getMatches(new RepositoryCallback<List<Match>>() {
+            @Override
+            public void onSuccess(List<Match> result) {
+                if (!isAdded()) return;
+
+                synchronized (combinedMatches) {
+                    for (Match match : result) {
+                        if ("live".equalsIgnoreCase(match.getMatchStatus())) {
+                            combinedMatches.add(match);
+                        }
+                    }
+                }
+
+                if (completedCalls.incrementAndGet() == 2) {
+                    updateMatchesUI(combinedMatches);
+                }
+            }
+
+            @Override
+            public void onError(Exception e) {
+                Log.e("LiveFragment", "Error refreshing thapcam matches", e);
+                if (completedCalls.incrementAndGet() == 2) {
+                    updateMatchesUI(combinedMatches);
+                }
+            }
+        });
+    }
+
+    private void updateMatchesUI(List<Match> newMatches) {
+        if (matches != null) {
+            List<Integer> updatedIndices = new ArrayList<>();
+
+            for (Match newMatch : newMatches) {
+                boolean found = false;
+                for (int i = 0; i < matches.size(); i++) {
+                    Match currentMatch = matches.get(i);
+
+                    if (currentMatch.getId().equals(newMatch.getId())) {
+                        found = true;
+                        // Only update if there are changes
+                        if (!currentMatch.getScores().equals(newMatch.getScores()) ||
+                                !currentMatch.getTimeInMatch().equals(newMatch.getTimeInMatch()) ||
+                                !currentMatch.getMatchStatus().equals(newMatch.getMatchStatus())) {
+
+                            currentMatch.setScores(newMatch.getScores());
+                            currentMatch.setTimeInMatch(newMatch.getTimeInMatch());
+                            currentMatch.setMatch_status(newMatch.getMatchStatus());
+                            updatedIndices.add(i);
+                        }
+                        break;
+                    }
+                }
+                
+                // If new match, add to list
+                if (!found) {
+                    matches.add(newMatch);
+                    updatedIndices.add(matches.size() - 1);
+                }
+            }
+
+            // Update UI
+            requireActivity().runOnUiThread(() -> {
+                // Update items that have changed
+                for (int index : updatedIndices) {
+                    matchesAdapter.notifyItemChanged(index);
+                }
+
+                // Restore focus if necessary
+                if (focusedPosition != RecyclerView.NO_POSITION) {
+                    RecyclerView.ViewHolder holder = recyclerViewMatches.findViewHolderForAdapterPosition(focusedPosition);
+                    if (holder != null) {
+                        holder.itemView.requestFocus();
+                    }
+                }
+            });
+        }
     }
 
     private void fetchMatchStreamUrl(String matchId) {
