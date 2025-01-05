@@ -1,11 +1,14 @@
 package com.thangoghd.thapcamtv.fragments;
 
 import android.app.DownloadManager;
+import android.app.ProgressDialog;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.database.Cursor;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.view.LayoutInflater;
@@ -189,10 +192,10 @@ public class UpdateFragment extends Fragment {
     private void startDownload(String downloadUrl) {
         try {
             // Show progress dialog
-            android.app.ProgressDialog progressDialog = new android.app.ProgressDialog(requireContext());
+            ProgressDialog progressDialog = new ProgressDialog(requireContext());
             progressDialog.setTitle("Đang tải bản cập nhật");
             progressDialog.setMessage("Đang chuẩn bị...");
-            progressDialog.setProgressStyle(android.app.ProgressDialog.STYLE_HORIZONTAL);
+            progressDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
             progressDialog.setProgress(0);
             progressDialog.setCancelable(false);
             progressDialog.show();
@@ -218,7 +221,7 @@ public class UpdateFragment extends Fragment {
                 while (downloading) {
                     DownloadManager.Query q = new DownloadManager.Query();
                     q.setFilterById(downloadId);
-                    android.database.Cursor cursor = downloadManager.query(q);
+                    Cursor cursor = downloadManager.query(q);
                     if (cursor.moveToFirst()) {
                         int bytesDownloadedColumn = cursor.getColumnIndex(DownloadManager.COLUMN_BYTES_DOWNLOADED_SO_FAR);
                         int bytesTotalColumn = cursor.getColumnIndex(DownloadManager.COLUMN_TOTAL_SIZE_BYTES);
@@ -290,10 +293,13 @@ public class UpdateFragment extends Fragment {
                     }
                 }
             };
-            
-            requireContext().registerReceiver(downloadReceiver, 
-                new IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE));
-            
+
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                requireContext().registerReceiver(downloadReceiver,
+                    new IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE),
+                    Context.RECEIVER_NOT_EXPORTED);
+            }
+
         } catch (Exception e) {
             e.printStackTrace();
         }

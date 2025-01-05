@@ -8,6 +8,7 @@ import android.content.ContentUris;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -47,8 +48,10 @@ public class LiveChannelHelper {
     private static final int TYPE_MOVIE = 0; // TvContractCompat.PreviewPrograms.TYPE_MOVIE
 
     public static boolean isChannelSupported(Context context) {
-        boolean isSupported = Build.VERSION.SDK_INT >= Build.VERSION_CODES.O;
-        Log.d("LiveChannelHelper", "Channel support: " + isSupported);
+        boolean isVersionSupported = Build.VERSION.SDK_INT >= Build.VERSION_CODES.O;
+        boolean isTvDevice = context.getPackageManager().hasSystemFeature(PackageManager.FEATURE_LEANBACK);
+        boolean isSupported = isVersionSupported && isTvDevice;
+        Log.d("LiveChannelHelper", "Channel support: " + isSupported + " (TV device: " + isTvDevice + ")");
         return isSupported;
     }
 
