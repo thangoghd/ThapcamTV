@@ -3,6 +3,7 @@ import android.util.Log;
 
 import androidx.annotation.NonNull;
 
+import com.thangoghd.thapcamtv.api.RetrofitClient;
 import com.thangoghd.thapcamtv.api.SportApi;
 import com.thangoghd.thapcamtv.models.Match;
 import com.thangoghd.thapcamtv.response.MatchResponse;
@@ -45,7 +46,9 @@ public class SportRepository {
 
             @Override
             public void onFailure(@NonNull Call<MatchResponse> call, @NonNull Throwable t) {
-                Log.e("SportRepository", "API call failed", t);
+                Log.e("SportRepository", "API call failed, maybe blocked from internet provider or wrong url", t);
+                // Try to fetch new config when API fails
+                RetrofitClient.fetchConfig();
                 callback.onError((Exception) t);
             }
         });

@@ -19,7 +19,9 @@
         android:layout_width="50dp"
         android:background="@color/background_gradient_start"
         android:nextFocusLeft="@id/sideMenu"
-        android:layout_height="match_parent">
+        android:layout_height="match_parent"
+        android:focusable="true"
+        android:focusableInTouchMode="true">
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -36,6 +38,7 @@
                 android:background="@drawable/menu_item_normal"
                 android:orientation="horizontal"
                 android:gravity="center_vertical"
+                android:clickable="true"
                 android:focusable="true">
 
                 <ImageView
@@ -61,6 +64,7 @@
                 android:background="@drawable/menu_item_normal"
                 android:orientation="horizontal"
                 android:gravity="center_vertical"
+                android:clickable="true"
                 android:focusable="true">
 
                 <ImageView
@@ -87,6 +91,7 @@
                 android:background="@drawable/menu_item_normal"
                 android:orientation="horizontal"
                 android:gravity="center_vertical"
+                android:clickable="true"
                 android:focusable="true">
 
                 <ImageView
@@ -113,6 +118,7 @@
                 android:background="@drawable/menu_item_normal"
                 android:orientation="horizontal"
                 android:gravity="center_vertical"
+                android:clickable="true"
                 android:focusable="true">
 
                 <ImageView
@@ -139,6 +145,7 @@
                 android:background="@drawable/menu_item_normal"
                 android:orientation="horizontal"
                 android:gravity="center_vertical"
+                android:clickable="true"
                 android:focusable="true">
 
                 <ImageView

@@ -1,5 +1,6 @@
 plugins {
     alias(libs.plugins.android.application)
+    id("com.google.gms.google-services")
 }
 
 android {
@@ -10,8 +11,8 @@ android {
         applicationId = "com.thangoghd.thapcamtv"
         minSdk = 24
         targetSdk = 34
-        versionCode = 10
-        versionName = "1.2.1"
+        versionCode = 11
+        versionName = "1.2.2"
 
     }
 
@@ -50,5 +51,10 @@ dependencies {
     implementation(libs.material)
     // https://mvnrepository.com/artifact/androidx.tvprovider/tvprovider
     implementation("androidx.tvprovider:tvprovider:1.0.0")
+    // https://mvnrepository.com/artifact/com.google.firebase/firebase-config
+    implementation("com.google.firebase:firebase-config:22.0.1")
     implementation(libs.video)
+    // Add Firebase dependencies
+    implementation(platform("com.google.firebase:firebase-bom:32.7.0"))
+    implementation("com.google.firebase:firebase-analytics")
 }

@@ -223,10 +223,15 @@ public class ReplayThapcamFragment extends Fragment implements ReplayAdapter.OnH
     }
 
     private void updatePaginationUI() {
-        TextView currentPageTextView = getView().findViewById(R.id.currentPage);
-        TextView totalPagesTextView = getView().findViewById(R.id.totalPages);
-        currentPageTextView.setText(String.valueOf(currentPage));
-        totalPagesTextView.setText("/ " + maxPages);
+        View view = getView();
+        if (view == null) return;  // Kiểm tra view null
+        
+        TextView currentPageTextView = view.findViewById(R.id.currentPage);
+        TextView totalPagesTextView = view.findViewById(R.id.totalPages);
+        if (currentPageTextView != null && totalPagesTextView != null) {
+            currentPageTextView.setText(String.valueOf(currentPage));
+            totalPagesTextView.setText("/ " + maxPages);
+        }
     }
 
     private void hideKeyboard() {

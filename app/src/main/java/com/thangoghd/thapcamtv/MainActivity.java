@@ -3,14 +3,18 @@ package com.thangoghd.thapcamtv;
 import android.animation.ValueAnimator;
 import android.content.Context;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.KeyEvent;
 import android.view.View;
+import android.view.Window;
+import android.view.WindowManager;
 import android.view.animation.DecelerateInterpolator;
 import android.widget.LinearLayout;
 import android.widget.Toast;
 
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentActivity;
+import androidx.fragment.app.FragmentTransaction;
 import androidx.leanback.widget.BrowseFrameLayout;
 
 import retrofit2.Call;
@@ -43,18 +47,57 @@ public class MainActivity extends FragmentActivity implements View.OnKeyListener
     private boolean SIDE_MENU = false;
     private UpdateManager updateManager;
 
+    private static final String TAG = "MainActivity";
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        
+        // Initialize Firebase and Remote Config
+        RetrofitClient.initRemoteConfig();
+        
+        // Add fullscreen flags
+        getWindow().setFlags(
+            WindowManager.LayoutParams.FLAG_FULLSCREEN,
+            WindowManager.LayoutParams.FLAG_FULLSCREEN
+        );
+        
+        // Hide system UI
+        View decorView = getWindow().getDecorView();
+        decorView.setSystemUiVisibility(
+            View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
+            | View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+            | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+            | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+            | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
+            | View.SYSTEM_UI_FLAG_FULLSCREEN
+        );
+        
         setContentView(R.layout.activity_main);
 
         navBar = findViewById(R.id.blfNavBar);
+        
+        // Initialize menu items
         btnLive = findViewById(R.id.navLive);
         btnHighlight = findViewById(R.id.navHighlight);
         btnFullMatch = findViewById(R.id.navFullMatch);
         btnFullMatchThapcam = findViewById(R.id.navFullMatchThapcam);
         btnCheckUpdate = findViewById(R.id.navCheckUpdate);
-        
+
+        // Set click listeners for touch events
+        View.OnClickListener menuClickListener = new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                handleMenuSelection(v);
+            }
+        };
+
+        btnLive.setOnClickListener(menuClickListener);
+        btnHighlight.setOnClickListener(menuClickListener);
+        btnFullMatch.setOnClickListener(menuClickListener);
+        btnFullMatchThapcam.setOnClickListener(menuClickListener);
+        btnCheckUpdate.setOnClickListener(menuClickListener);
+
         btnCheckUpdate.setVisibility(View.GONE);
 
         navBar.setOnKeyListener(this);
@@ -232,6 +275,44 @@ public class MainActivity extends FragmentActivity implements View.OnKeyListener
             return latest.length > current.length;
         } catch (Exception e) {
             return false;
+        }
+    }
+
+    private void handleMenuSelection(View view) {
+        try {
+            Log.d(TAG, "handleMenuSelection: Processing menu click for view id: " + view.getId());
+            
+            // Remove selection from previous menu
+            if (lastSelectedMenu != null) {
+                lastSelectedMenu.setBackground(getDrawable(R.drawable.menu_item_normal));
+                Log.d(TAG, "handleMenuSelection: Removed highlight from previous menu");
+            }
+
+            // Set new selection
+            lastSelectedMenu = (LinearLayout) view;
+            lastSelectedMenu.setBackground(getDrawable(R.drawable.menu_item_focused));
+            Log.d(TAG, "handleMenuSelection: Set highlight for new menu selection");
+
+            // Change fragment based on selection
+            if (view.getId() == R.id.navLive) {
+                changeFragment(new LiveFragment());
+                animateMenu(btnLive);
+            } else if (view.getId() == R.id.navHighlight) {
+                changeFragment(new HighlightFragment());
+                animateMenu(btnHighlight);
+            } else if (view.getId() == R.id.navFullMatch) {
+                changeFragment(new FullMatchFragment());
+                animateMenu(btnFullMatch);
+            } else if (view.getId() == R.id.navFullMatchThapcam) {
+                changeFragment(new ReplayThapcamFragment());
+                animateMenu(btnFullMatchThapcam);
+            } else if (view.getId() == R.id.navCheckUpdate) {
+                changeFragment(new UpdateFragment());
+                animateMenu(btnCheckUpdate);
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "handleMenuSelection: Error processing menu selection", e);
+            e.printStackTrace();
         }
     }
 
