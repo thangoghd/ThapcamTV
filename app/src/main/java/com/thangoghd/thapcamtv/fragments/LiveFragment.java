@@ -52,7 +52,6 @@ import java.security.cert.X509Certificate;
 public class LiveFragment extends Fragment {
     private RecyclerView recyclerViewSports;
     private RecyclerView recyclerViewMatches;
-    private SportRepository sportRepository;
     private List<Match> matches; // Store matches for the selected sport
     private SportsAdapter sportsAdapter; // Adapter for sports categories
     private MatchesAdapter matchesAdapter;
@@ -73,16 +72,10 @@ public class LiveFragment extends Fragment {
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_live, container, false);
 
-        allowAllSSL();
-
         backgroundImageView = view.findViewById(R.id.backgroundImageView);
         recyclerViewSports = view.findViewById(R.id.recyclerViewSports);
         recyclerViewMatches = view.findViewById(R.id.recyclerViewMatches);
         loadingView = view.findViewById(R.id.loadingView); // Initialize loading view
-
-        // First try to load from vebo.xyz
-        SportApi sportApi = ApiManager.getSportApi(true);
-        sportRepository = new SportRepository(sportApi);
 
         setupSportsRecyclerView();
         // Load matches for the default sport (football)
@@ -603,23 +596,6 @@ public class LiveFragment extends Fragment {
             intent.putExtra("source_type", "live");
             startActivity(intent);
         });
-    }
-
-    private void allowAllSSL() {
-        try {
-            SSLContext sc = SSLContext.getInstance("TLS");
-            sc.init(null, new TrustManager[] { new X509TrustManager() {
-                @Override
-                public void checkClientTrusted(X509Certificate[] chain, String authType) {}
-                @Override
-                public void checkServerTrusted(X509Certificate[] chain, String authType) {}
-                @Override
-                public X509Certificate[] getAcceptedIssuers() { return new X509Certificate[0]; }
-            } }, new java.security.SecureRandom());
-            HttpsURLConnection.setDefaultSSLSocketFactory(sc.getSocketFactory());
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
     }
 
     private void changeBackground(SportType sportType) {

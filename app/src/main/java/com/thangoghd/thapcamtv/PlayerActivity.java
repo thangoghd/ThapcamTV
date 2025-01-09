@@ -42,9 +42,15 @@ import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 
+import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
+
+import javax.net.ssl.HttpsURLConnection;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.X509TrustManager;
 
 public class PlayerActivity extends AppCompatActivity {
 
@@ -93,6 +99,8 @@ public class PlayerActivity extends AppCompatActivity {
             | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
             | View.SYSTEM_UI_FLAG_FULLSCREEN
         );
+
+        allowAllSSL();
 
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
     
@@ -224,6 +232,7 @@ public class PlayerActivity extends AppCompatActivity {
         headers.put("Accept-Language", "vi-VN,vi;q=0.8,en-US;q=0.5,en;q=0.3");
         headers.put("Connection", "keep-alive");
         headers.put("Referer", "https://i.fdcdn.xyz/");
+        headers.put("Origins", "https://i.fdcdn.xyz/");
 
         // Create DataSource Factory with headers
         DefaultHttpDataSource.Factory dataSourceFactory = new DefaultHttpDataSource.Factory()
@@ -461,5 +470,22 @@ public class PlayerActivity extends AppCompatActivity {
             params.weight = isChatVisible ? 0.9f : 1.0f;
             playerContainer.setLayoutParams(params);
         });
+    }
+
+    private void allowAllSSL() {
+        try {
+            SSLContext sc = SSLContext.getInstance("TLS");
+            sc.init(null, new TrustManager[] { new X509TrustManager() {
+                @Override
+                public void checkClientTrusted(X509Certificate[] chain, String authType) {}
+                @Override
+                public void checkServerTrusted(X509Certificate[] chain, String authType) {}
+                @Override
+                public X509Certificate[] getAcceptedIssuers() { return new X509Certificate[0]; }
+            } }, new java.security.SecureRandom());
+            HttpsURLConnection.setDefaultSSLSocketFactory(sc.getSocketFactory());
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 }
