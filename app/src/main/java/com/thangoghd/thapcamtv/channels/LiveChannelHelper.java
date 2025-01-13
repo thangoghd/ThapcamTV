@@ -176,6 +176,8 @@ public class LiveChannelHelper {
                 // Single commentator
                 commentatorsNames.append(commentators.get(0).getName());
             }
+        } else {
+            commentatorsNames.append("Nhà Đài");
         }
         values.put(COLUMN_TITLE, title);
         values.put(COLUMN_DESCRIPTION, match.getTournament().getName() + "\n" + commentatorsNames);
@@ -192,7 +194,7 @@ public class LiveChannelHelper {
         intent.putExtra("is_loading", true);
         intent.putExtra("match_id", match.getId());
         intent.putExtra("sport_type", match.getSportType());
-        intent.putExtra("sync_key", match.getSync());
+        intent.putExtra("sync_key", match.getSync() != null ? match.getSync() : match.getId());
         intent.putExtra("from", match.getFrom());
         
         // Convert intent to URI string with all flags preserved
@@ -203,23 +205,5 @@ public class LiveChannelHelper {
         if (programUri != null) {
             Log.d("LiveChannelHelper", "Added program: " + programUri);
         }
-    }
-
-    private static PendingIntent buildMatchIntent(Context context, Match match) {
-        Intent intent = new Intent(context, PlayerActivity.class);
-        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-        intent.putExtra("source_type", "live");
-        intent.putExtra("is_loading", true);
-        intent.putExtra("match_id", match.getId());
-        intent.putExtra("sport_type", match.getSportType());
-        intent.putExtra("sync_key", match.getSync() != null ? match.getSync() : match.getId());
-        intent.putExtra("from", match.getFrom());
-
-        return PendingIntent.getActivity(
-            context,
-            match.getId().hashCode(),
-            intent,
-            PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
-        );
     }
 }

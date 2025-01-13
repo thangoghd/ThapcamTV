@@ -115,7 +115,7 @@ public class PlayerActivity extends AppCompatActivity {
         String matchId = getIntent().getStringExtra("match_id");
         String sportType = getIntent().getStringExtra("sport_type");
         boolean isLoading = getIntent().getBooleanExtra("is_loading", false);
-        boolean showQualitySpinner = getIntent().getBooleanExtra("show_quality_spinner", true);
+        boolean showQualitySpinner = getIntent().getBooleanExtra("show_quality_spinner", false);
 
         // Handle intent from Android TV channel
         if (getIntent().getData() != null) {
@@ -124,7 +124,7 @@ public class PlayerActivity extends AppCompatActivity {
                 String highlightId = data.getLastPathSegment();
                 if (highlightId != null) {
                     showLoading(true);
-                    fetchHighlightVideo(highlightId);
+                    fetchHighlightVideoFromChannel(highlightId);
                     return;
                 }
             }
@@ -162,7 +162,7 @@ public class PlayerActivity extends AppCompatActivity {
                 // Nothing to do
             }
         });
-        resetHideTimer();
+//        resetHideTimer();
     }
 
     public void onStreamUrlReceived(HashMap<String, String> streamUrls) {
@@ -404,7 +404,7 @@ public class PlayerActivity extends AppCompatActivity {
         }
     }
 
-    private void fetchHighlightVideo(String id) {
+    private void fetchHighlightVideoFromChannel(String id) {
         Log.d("PlayerActivity", "Fetching highlight video for id: " + id);
         
         ApiManager.getSportApi(true).getReplayDetails(id).enqueue(new Callback<ReplayLinkResponse>() {
@@ -417,6 +417,7 @@ public class PlayerActivity extends AppCompatActivity {
                         showLoading(false);
                         handleVideoSource("replay", videoUrl);
                         qualitySpinner.setVisibility(View.GONE);
+                        chatToggleButton.setVisibility(View.GONE);
                     });
                 } else {
                     Log.e("PlayerActivity", "Highlight video API error: " + response.code());

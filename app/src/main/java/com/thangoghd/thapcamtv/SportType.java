@@ -3,7 +3,7 @@ package com.thangoghd.thapcamtv;
 import androidx.annotation.DrawableRes;
 
 public enum SportType {
-    LIVE("live", "Trực Tiếp", R.drawable.navbar_ic_live),
+    LIVE("live", "Trực Tiếp", R.drawable.ic_live),
     FOOTBALL("football", "Bóng đá", R.drawable.ic_football),
     BASKETBALL("basketball", "Bóng rổ", R.drawable.ic_basketball),
     ESPORTS("esports", "Thể thao điện tử", R.drawable.ic_esports),

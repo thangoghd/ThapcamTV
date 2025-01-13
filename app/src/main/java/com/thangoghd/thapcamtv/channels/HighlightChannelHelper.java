@@ -19,6 +19,7 @@ import androidx.tvprovider.media.tv.Channel;
 import androidx.tvprovider.media.tv.ChannelLogoUtils;
 import androidx.tvprovider.media.tv.TvContractCompat;
 
+import com.thangoghd.thapcamtv.PlayerActivity;
 import com.thangoghd.thapcamtv.R;
 import com.thangoghd.thapcamtv.models.Replay;
 
@@ -49,8 +50,6 @@ public class HighlightChannelHelper {
             Log.d("HighlightChannel", "Channel not supported on this device");
             return -1;
         }
-
-        Log.d("HighlightChannel", "Creating or getting channel...");
 
         // Check if channel already exists
         String[] projection = {TvContractCompat.Channels._ID, "internal_provider_id"};
@@ -84,7 +83,7 @@ public class HighlightChannelHelper {
         // Create new channel if it doesn't exist
         Channel.Builder builder = new Channel.Builder();
         builder.setType(TvContractCompat.Channels.TYPE_PREVIEW)
-                .setDisplayName("Highlight")
+                .setDisplayName("Highlights")
                 .setAppLinkIntentUri(Uri.parse("thapcamtv://highlight"))
                 .setInternalProviderId(CHANNEL_ID);
 
@@ -95,17 +94,12 @@ public class HighlightChannelHelper {
         }
         
         long channelId = ContentUris.parseId(channelUri);
-        Log.d("HighlightChannel", "Created new channel with ID: " + channelId);
-        
 
         Bitmap bitmap = BitmapFactory.decodeResource(context.getResources(), R.mipmap.ic_thapcamtv);
         ChannelLogoUtils.storeChannelLogo(context, channelId, bitmap);
-        Log.d("HighlightChannel", "Channel logo added successfully");
-
         
         // Make channel browsable
         TvContractCompat.requestChannelBrowsable(context, channelId);
-        Log.d("HighlightChannel", "Channel set as browsable");
         
         return channelId;
     }
