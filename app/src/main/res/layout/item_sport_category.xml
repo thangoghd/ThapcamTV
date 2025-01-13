@@ -2,21 +2,24 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="wrap_content"
     android:layout_height="wrap_content"
-    android:orientation="horizontal"
-    android:padding="8dp"
     android:background="@drawable/sport_category_selector"
     android:focusable="true"
-    android:focusableInTouchMode="true">
+    android:focusableInTouchMode="true"
+    android:orientation="horizontal"
+    android:padding="8dp"
+    android:paddingLeft="2dp"
+    android:paddingRight="2dp">
 
     <ImageView
         android:id="@+id/sportIcon"
         android:layout_width="wrap_content"
-        android:layout_height="wrap_content" 
-        android:layout_marginEnd="8dp" />
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="5dp" />
 
     <TextView
         android:id="@+id/sportName"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_marginTop="2dp"
         android:textAlignment="center" />
 </LinearLayout>

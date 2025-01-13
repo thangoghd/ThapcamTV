@@ -137,7 +137,7 @@ public class MatchesAdapter extends RecyclerView.Adapter<MatchesAdapter.MatchVie
                 liveLayout.setVisibility(View.VISIBLE);
             }
             else{
-                liveLayout.setVisibility(View.GONE);
+                liveLayout.setVisibility(View.INVISIBLE);
             }
 
             // Set match status
