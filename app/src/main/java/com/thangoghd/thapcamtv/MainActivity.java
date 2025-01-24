@@ -158,6 +158,9 @@ public class MainActivity extends FragmentActivity implements View.OnKeyListener
             if (btnFullMatchThapcam.hasFocus()) {
                 closeMenu();
             }
+        } else if (keyCode == KeyEvent.KEYCODE_DPAD_LEFT || keyCode == KeyEvent.KEYCODE_DPAD_RIGHT) {
+            // Prevent unwanted selection changes during D-pad navigation
+            return super.onKeyDown(keyCode, event);
         }
         return super.onKeyDown(keyCode, event);
     }
@@ -280,18 +283,8 @@ public class MainActivity extends FragmentActivity implements View.OnKeyListener
 
     private void handleMenuSelection(View view) {
         try {
-            Log.d(TAG, "handleMenuSelection: Processing menu click for view id: " + view.getId());
-            
-            // Remove selection from previous menu
-            if (lastSelectedMenu != null) {
-                lastSelectedMenu.setBackground(getDrawable(R.drawable.menu_item_normal));
-                Log.d(TAG, "handleMenuSelection: Removed highlight from previous menu");
-            }
-
-            // Set new selection
-            lastSelectedMenu = (LinearLayout) view;
-            lastSelectedMenu.setBackground(getDrawable(R.drawable.menu_item_focused));
-            Log.d(TAG, "handleMenuSelection: Set highlight for new menu selection");
+            // Update selection without affecting focus
+            updateMenuSelection((LinearLayout) view);
 
             // Change fragment based on selection
             if (view.getId() == R.id.navLive) {
@@ -311,8 +304,23 @@ public class MainActivity extends FragmentActivity implements View.OnKeyListener
                 animateMenu(btnCheckUpdate);
             }
         } catch (Exception e) {
-            Log.e(TAG, "handleMenuSelection: Error processing menu selection", e);
             e.printStackTrace();
+        }
+    }
+
+    private void updateMenuSelection(LinearLayout selectedMenu) {
+        if (selectedMenu == null) return;
+        
+        // Only update if selection has changed
+        if (lastSelectedMenu != selectedMenu) {
+            // Remove selection from previous menu
+            if (lastSelectedMenu != null) {
+                lastSelectedMenu.setBackground(getDrawable(R.drawable.menu_item_normal));
+            }
+
+            // Set new selection
+            lastSelectedMenu = selectedMenu;
+            lastSelectedMenu.setBackground(getDrawable(R.drawable.menu_item_focused));
         }
     }
 
