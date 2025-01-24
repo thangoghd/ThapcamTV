@@ -1,9 +1,12 @@
 package com.thangoghd.thapcamtv.api;
 
 import com.google.gson.JsonObject;
+import com.thangoghd.thapcamtv.models.Provider;
 import com.thangoghd.thapcamtv.response.ReplayLinkResponse;
 import com.thangoghd.thapcamtv.response.MatchResponse;
 import com.thangoghd.thapcamtv.response.ReplayResponse;
+
+import java.util.List;
 
 import retrofit2.Call;
 import retrofit2.http.GET;
@@ -36,4 +39,7 @@ public interface SportApi {
 
     @GET("api/news/thapcam/search/xemlai/{query}")
     Call<ReplayResponse> searchReplaysFromThapcam(@Path("query") String query);
+
+    @GET("providers")
+    Call<Provider> getProviders();
 }

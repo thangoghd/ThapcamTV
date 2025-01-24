@@ -35,6 +35,7 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.thangoghd.thapcamtv.api.ApiManager;
+import com.thangoghd.thapcamtv.api.RetrofitClient;
 import com.thangoghd.thapcamtv.api.SportApi;
 import com.thangoghd.thapcamtv.response.ReplayLinkResponse;
 
@@ -227,12 +228,13 @@ public class PlayerActivity extends AppCompatActivity {
 
         // Configure headers based on thapcam app
         Map<String, String> headers = new HashMap<>();
+        String refererUrl = RetrofitClient.getRefererUrl();
         headers.put("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/110.0.0.0 Safari/537.36");
         headers.put("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8");
         headers.put("Accept-Language", "vi-VN,vi;q=0.8,en-US;q=0.5,en;q=0.3");
         headers.put("Connection", "keep-alive");
-        headers.put("Referer", "https://i.fdcdn.xyz/");
-        headers.put("Origins", "https://i.fdcdn.xyz/");
+        headers.put("Referer", refererUrl);
+        headers.put("Origins", refererUrl);
 
         // Create DataSource Factory with headers
         DefaultHttpDataSource.Factory dataSourceFactory = new DefaultHttpDataSource.Factory()
