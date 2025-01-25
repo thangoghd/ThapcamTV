@@ -24,6 +24,7 @@ import com.thangoghd.thapcamtv.PlayerActivity;
 import com.thangoghd.thapcamtv.R;
 import com.thangoghd.thapcamtv.models.Commentator;
 import com.thangoghd.thapcamtv.models.Match;
+import com.thangoghd.thapcamtv.providers.ProgramImageProvider;
 import com.thangoghd.thapcamtv.utils.MatchImageHelper;
 
 import java.util.List;
@@ -178,8 +179,10 @@ public class LiveChannelHelper {
         values.put(COLUMN_TYPE, TYPE_MOVIE);
 
         // Try to find custom image from providers, fallback to tournament logo if not found
-        String imageUri = MatchImageHelper.findMatchImage(matchTitle, match.getTournament().getLogo());
-        values.put(COLUMN_POSTER_ART_URI, imageUri);
+        String imageUrl = MatchImageHelper.findMatchImage(matchTitle, match.getTournament().getLogo());
+        // Convert image URL to content URI that will serve the image in 16:9 ratio
+        Uri imageUri = ProgramImageProvider.buildImageUri(imageUrl);
+        values.put(COLUMN_POSTER_ART_URI, imageUri.toString());
         values.put(COLUMN_LIVE, 0);
         values.put(COLUMN_INTERNAL_PROVIDER_ID, match.getId());
         values.put(COLUMN_SEARCHABLE, 1);

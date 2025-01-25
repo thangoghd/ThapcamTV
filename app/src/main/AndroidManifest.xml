@@ -37,6 +37,10 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <provider
+            android:name=".providers.ProgramImageProvider"
+            android:authorities="com.thangoghd.thapcamtv.programimage"
+            android:exported="true" />
         <activity
             android:name=".PlayerActivity"
             android:configChanges="keyboard|keyboardHidden|navigation"
