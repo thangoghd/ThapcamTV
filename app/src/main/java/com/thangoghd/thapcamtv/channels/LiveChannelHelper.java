@@ -1,6 +1,5 @@
 package com.thangoghd.thapcamtv.channels;
 
-import android.app.PendingIntent;
 import android.app.job.JobInfo;
 import android.app.job.JobScheduler;
 import android.content.ComponentName;

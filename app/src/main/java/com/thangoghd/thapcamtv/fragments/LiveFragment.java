@@ -43,12 +43,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import retrofit2.Call;
 import retrofit2.Response;
 
-import javax.net.ssl.SSLContext;
-import javax.net.ssl.TrustManager;
-import javax.net.ssl.X509TrustManager;
-import javax.net.ssl.HttpsURLConnection;
-import java.security.cert.X509Certificate;
-
 public class LiveFragment extends Fragment {
     private RecyclerView recyclerViewSports;
     private RecyclerView recyclerViewMatches;

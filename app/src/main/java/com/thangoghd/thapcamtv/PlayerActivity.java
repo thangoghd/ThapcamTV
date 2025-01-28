@@ -1,14 +1,18 @@
 package com.thangoghd.thapcamtv;
 
+import android.graphics.Rect;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
 import android.util.TypedValue;
+import android.view.KeyEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
+import android.webkit.WebView;
+import android.webkit.WebViewClient;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ImageButton;
@@ -17,36 +21,43 @@ import android.widget.ProgressBar;
 import android.widget.Spinner;
 import android.widget.Toast;
 
-import android.webkit.WebView;
-import android.webkit.WebViewClient;
-
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.recyclerview.widget.GridLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+
 import com.google.android.exoplayer2.ExoPlayer;
 import com.google.android.exoplayer2.MediaItem;
 import com.google.android.exoplayer2.PlaybackException;
 import com.google.android.exoplayer2.Player;
-import com.google.android.exoplayer2.ui.PlayerView;
 import com.google.android.exoplayer2.source.hls.HlsMediaSource;
+import com.google.android.exoplayer2.ui.PlayerView;
 import com.google.android.exoplayer2.upstream.DefaultHttpDataSource;
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import com.thangoghd.thapcamtv.adapters.SimpleMatchAdapter;
 import com.thangoghd.thapcamtv.api.ApiManager;
 import com.thangoghd.thapcamtv.api.RetrofitClient;
 import com.thangoghd.thapcamtv.api.SportApi;
+import com.thangoghd.thapcamtv.models.Match;
+import com.thangoghd.thapcamtv.repositories.RepositoryCallback;
+import com.thangoghd.thapcamtv.repositories.SportRepository;
 import com.thangoghd.thapcamtv.response.ReplayLinkResponse;
+
+import java.security.cert.X509Certificate;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
-
-import java.security.cert.X509Certificate;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
 
 import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLContext;
@@ -64,8 +75,13 @@ public class PlayerActivity extends AppCompatActivity {
     private WebView commentsWebView;
     private ImageButton chatToggleButton;
     private boolean isChatVisible = false;
-
+    private RecyclerView matchesRecyclerView;
+    private SimpleMatchAdapter matchesAdapter;
+    private View matchListOverlay;
+    private final List<Match> liveMatches = new ArrayList<>();
+    private boolean isOverlayVisible = false;
     private final Handler hideHandler = new Handler(Looper.getMainLooper());
+
     private final Runnable hideRunnable = new Runnable() {
         @Override
         public void run() {
@@ -110,6 +126,8 @@ public class PlayerActivity extends AppCompatActivity {
         loadingProgressBar = findViewById(R.id.loading_progress);
         commentsWebView = findViewById(R.id.comments_webview);
         chatToggleButton = findViewById(R.id.chat_toggle_button);
+        matchListOverlay = findViewById(R.id.match_list_overlay);
+        matchesRecyclerView = findViewById(R.id.matches_recycler_view);
 
         String videoUrl = getIntent().getStringExtra("replay_url");
         String sourceType = getIntent().getStringExtra("source_type");
@@ -163,7 +181,41 @@ public class PlayerActivity extends AppCompatActivity {
                 // Nothing to do
             }
         });
-//        resetHideTimer();
+
+        setupRecyclerView();
+
+        // Get intent data and start playback
+        String matchIdFromIntent = getIntent().getStringExtra("matchId");
+        String sportTypeFromIntent = getIntent().getStringExtra("sportType");
+        if (matchIdFromIntent != null && sportTypeFromIntent != null) {
+            fetchMatchStreamUrl(matchIdFromIntent, sportTypeFromIntent);
+        }
+    }
+
+    private void setupRecyclerView() {
+        GridLayoutManager layoutManager = new GridLayoutManager(this, 4);
+        matchesRecyclerView.setLayoutManager(layoutManager);
+        
+        matchesAdapter = new SimpleMatchAdapter(this, 
+            match -> {
+                hideOverlay();
+                fetchMatchStreamUrl(match.getId(), match.getSportType());
+            });
+        
+        matchesRecyclerView.setAdapter(matchesAdapter);
+        
+        // Add spacing between items
+        int spacing = getResources().getDimensionPixelSize(R.dimen.grid_spacing);
+        matchesRecyclerView.addItemDecoration(new RecyclerView.ItemDecoration() {
+            @Override
+            public void getItemOffsets(@NonNull Rect outRect, @NonNull View view, 
+                                     @NonNull RecyclerView parent, @NonNull RecyclerView.State state) {
+                outRect.left = spacing;
+                outRect.right = spacing;
+                outRect.top = spacing;
+                outRect.bottom = spacing;
+            }
+        });
     }
 
     public void onStreamUrlReceived(HashMap<String, String> streamUrls) {
@@ -489,6 +541,136 @@ public class PlayerActivity extends AppCompatActivity {
             HttpsURLConnection.setDefaultSSLSocketFactory(sc.getSocketFactory());
         } catch (Exception e) {
             e.printStackTrace();
+        }
+    }
+
+    @Override
+    public boolean onKeyDown(int keyCode, KeyEvent event) {
+        if (keyCode == KeyEvent.KEYCODE_DPAD_DOWN) {
+            if (!isOverlayVisible) {
+                showOverlay();
+                return true;
+            }
+        } else if (keyCode == KeyEvent.KEYCODE_BACK) {
+            if (isOverlayVisible) {
+                hideOverlay();
+                return true;
+            }
+        }
+        return super.onKeyDown(keyCode, event);
+    }
+
+    private void showOverlay() {
+        // Load live matches
+        loadLiveMatches();
+        
+        // Show with animation
+        matchListOverlay.setVisibility(View.VISIBLE);
+        matchListOverlay.setTranslationY(matchListOverlay.getHeight());
+        matchListOverlay.animate()
+                .translationY(0)
+                .setDuration(250)
+                .start();
+        
+        isOverlayVisible = true;
+    }
+
+    private void hideOverlay() {
+        matchListOverlay.animate()
+                .translationY(matchListOverlay.getHeight())
+                .setDuration(250)
+                .withEndAction(() -> {
+                    matchListOverlay.setVisibility(View.GONE);
+                    isOverlayVisible = false;
+                })
+                .start();
+    }
+
+    private void loadLiveMatches() {
+        // Create repositories for both APIs
+        SportApi veboApi = ApiManager.getSportApi(true);
+        SportApi thapcamApi = ApiManager.getSportApi(false);
+        SportRepository veboRepository = new SportRepository(veboApi);
+        SportRepository thapcamRepository = new SportRepository(thapcamApi);
+
+        final List<Match> allMatches = new ArrayList<>();
+        final AtomicInteger completedCalls = new AtomicInteger(0);
+
+        // Load matches from vebo.xyz
+        veboRepository.getMatches(new RepositoryCallback<List<Match>>() {
+            @Override
+            public void onSuccess(List<Match> result) {
+                synchronized (allMatches) {
+                    if (result != null) {
+                        for (Match match : result) {
+                            if (match.getLive() && 
+                                !"finished".equalsIgnoreCase(match.getMatchStatus()) &&
+                                !"canceled".equalsIgnoreCase(match.getMatchStatus())) {
+                                match.setFrom("vebo");
+                                allMatches.add(match);
+                            }
+                        }
+                    }
+                }
+                checkAndUpdateMatches(completedCalls, allMatches);
+            }
+
+            @Override
+            public void onError(Exception e) {
+                Log.e("PlayerActivity", "Error loading vebo matches", e);
+                checkAndUpdateMatches(completedCalls, allMatches);
+            }
+        });
+
+        // Load matches from thapcam.xyz
+        thapcamRepository.getMatches(new RepositoryCallback<List<Match>>() {
+            @Override
+            public void onSuccess(List<Match> result) {
+                synchronized (allMatches) {
+                    if (result != null) {
+                        for (Match match : result) {
+                            if (match.getLive() && 
+                                !"finished".equalsIgnoreCase(match.getMatchStatus()) &&
+                                !"canceled".equalsIgnoreCase(match.getMatchStatus())) {
+                                match.setFrom("thapcam");
+                                allMatches.add(match);
+                            }
+                        }
+                    }
+                }
+                checkAndUpdateMatches(completedCalls, allMatches);
+            }
+
+            @Override
+            public void onError(Exception e) {
+                Log.e("PlayerActivity", "Error loading thapcam matches", e);
+                checkAndUpdateMatches(completedCalls, allMatches);
+            }
+        });
+    }
+
+    private void checkAndUpdateMatches(AtomicInteger completedCalls, List<Match> allMatches) {
+        if (completedCalls.incrementAndGet() == 2) {
+            // Sort matches by sport type priority and tournament priority
+            List<String> SPORT_PRIORITY = Arrays.asList("live", "football", "basketball", "esports",
+                "tennis", "volleyball", "badminton", "race", "pool", "wwe", "event", "other");
+            
+            allMatches.sort((m1, m2) -> {
+                // First compare by sport type priority
+                int sport1Index = SPORT_PRIORITY.indexOf(m1.getSportType());
+                int sport2Index = SPORT_PRIORITY.indexOf(m2.getSportType());
+                if (sport1Index != sport2Index) {
+                    return Integer.compare(sport1Index, sport2Index);
+                }
+                
+                // If same sport type, compare by tournament priority
+                return Integer.compare(
+                    m2.getTournament() != null ? m2.getTournament().getPriority() : 0,
+                    m1.getTournament() != null ? m1.getTournament().getPriority() : 0
+                );
+            });
+
+            runOnUiThread(() -> matchesAdapter.updateMatches(allMatches));
         }
     }
 }

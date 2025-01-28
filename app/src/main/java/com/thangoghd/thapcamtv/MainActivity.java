@@ -168,7 +168,6 @@ public class MainActivity extends FragmentActivity implements View.OnKeyListener
     @Override
     public void onBackPressed() {
         if (SIDE_MENU) {
-            SIDE_MENU = false;
             closeMenu();
         } else {
             if (lastBackPressTime + DOUBLE_BACK_PRESS_INTERVAL > System.currentTimeMillis()) {
