@@ -135,4 +135,3 @@ public class Match {
 
     public void setFrom(String from){this.from = from;}
 }
-

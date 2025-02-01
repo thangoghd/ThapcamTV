@@ -86,7 +86,7 @@ public class PlayerControlView extends FrameLayout {
 
     public interface PlayerControlCallback {
         void onVisibilityChanged(boolean isVisible);
-        void onMatchSelected(Match match, String from);
+        void onMatchSelected(Match match, String from, String syncKey);
         void onPlayPause(boolean isPlaying);
         void onRewind();
         void onForward();
@@ -176,7 +176,15 @@ public class PlayerControlView extends FrameLayout {
             if (playerCallback != null) {
                 // Hide match list before callback to prevent multiple clicks
                 hideMatchList();
-                playerCallback.onMatchSelected(match, from);
+                String syncKey = match.getSync(); // Get syncKey from match
+                Log.d(TAG, "Match selected - id: " + match.getId() + 
+                          ", syncKey: " + syncKey + 
+                          ", from: " + from);
+                // If syncKey is null, use match id
+                if (syncKey == null) {
+                    syncKey = match.getId();
+                }
+                playerCallback.onMatchSelected(match, from, syncKey);
             }
         });
         
@@ -430,7 +438,29 @@ public class PlayerControlView extends FrameLayout {
 
     public void setMatches(List<Match> newMatches) {
         Log.d(TAG, "setMatches: size=" + (newMatches != null ? newMatches.size() : 0));
+        if (newMatches != null) {
+            for (Match match : newMatches) {
+                Log.d(TAG, "Match - id: " + match.getId() + 
+                          ", sync: " + match.getSync() + 
+                          ", from: " + match.getFrom());
+            }
+        }
         matches.clear();
+        if (newMatches != null) {
+            matches.addAll(newMatches);
+        }
+        matchAdapter.updateMatches(matches);
+    }
+
+    public void addMatches(List<Match> newMatches) {
+        Log.d(TAG, "addMatches: size=" + (newMatches != null ? newMatches.size() : 0));
+        if (newMatches != null) {
+            for (Match match : newMatches) {
+                Log.d(TAG, "Match - id: " + match.getId() + 
+                          ", sync: " + match.getSync() + 
+                          ", from: " + match.getFrom());
+            }
+        }
         if (newMatches != null) {
             matches.addAll(newMatches);
         }

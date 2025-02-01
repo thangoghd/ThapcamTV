@@ -487,7 +487,7 @@ public class LiveFragment extends Fragment {
         intent.putExtra("sport_type", selectedMatch.getSportType());
         intent.putExtra("sync_key", selectedMatch.getSync() != null ? selectedMatch.getSync() : matchId);
         intent.putExtra("from", selectedMatch.getFrom());
-        intent.putExtra("show_quality_spinner", true); // Thêm dòng này
+        intent.putExtra("show_quality_spinner", true);
         startActivity(intent);
 
         SportApi api;
@@ -589,7 +589,7 @@ public class LiveFragment extends Fragment {
             Intent intent = new Intent(getContext(), PlayerActivity.class);
             intent.putExtra("stream_url", qualityMap);
             intent.putExtra("source_type", "live");
-            intent.putExtra("show_quality_spinner", true); // Thêm dòng này
+            intent.putExtra("show_quality_spinner", true);
             startActivity(intent);
         });
     }

@@ -67,6 +67,7 @@ public class PlayerActivity extends AppCompatActivity {
     private ProgressBar loadingProgressBar;
     private WebView commentsWebView;
     private boolean isChatVisible = false;
+    private String syncKey;
     private final Handler progressHandler = new Handler(Looper.getMainLooper());
     private final Runnable updateProgressAction = new Runnable() {
         @Override
@@ -128,6 +129,7 @@ public class PlayerActivity extends AppCompatActivity {
         String matchId = getIntent().getStringExtra("match_id");
         String sportType = getIntent().getStringExtra("sport_type");
         String matchFrom = getIntent().getStringExtra("from");
+        syncKey = getIntent().getStringExtra("sync_key");
         boolean isLoading = getIntent().getBooleanExtra("is_loading", false);
         boolean showQualitySpinner = getIntent().getBooleanExtra("show_quality_spinner", false);
 
@@ -146,7 +148,8 @@ public class PlayerActivity extends AppCompatActivity {
 
         Log.d("PlayerActivity", "onCreate - sourceType: " + sourceType + 
               ", matchId: " + matchId + ", sportType: " + sportType + 
-              ", isLoading: " + isLoading + ", from: " + matchFrom);
+              ", isLoading: " + isLoading + ", from: " + matchFrom +
+              ", syncKey: " + syncKey);
 
         if (isLoading && matchId != null) {
             showLoading(true);
@@ -171,9 +174,13 @@ public class PlayerActivity extends AppCompatActivity {
             }
 
             @Override
-            public void onMatchSelected(Match match, String from) {
+            public void onMatchSelected(Match match, String from, String syncKey) {
                 if (match != null) {
                     String matchId = match.getId();
+                    // Update syncKey
+                    if (syncKey != null) {
+                        updateSyncKey(syncKey);
+                    }
                     fetchMatchStreamUrl(matchId, from);
                 }
             }
@@ -523,7 +530,6 @@ public class PlayerActivity extends AppCompatActivity {
 
         if (isChatVisible) {
             // Get sync key from intent
-            String syncKey = getIntent().getStringExtra("sync_key");
             String chatUrl = String.format("https://chat.vebotv.me/?room=%s", syncKey);
 
             // Setup WebView
@@ -546,6 +552,15 @@ public class PlayerActivity extends AppCompatActivity {
         LinearLayout.LayoutParams params = (LinearLayout.LayoutParams) playerContainer.getLayoutParams();
         params.weight = isChatVisible ? 0.9f : 1.0f;
         playerContainer.setLayoutParams(params);
+    }
+
+    private void updateSyncKey(String newSyncKey) {
+        this.syncKey = newSyncKey;
+        // Update WebView URL with new syncKey if chat is visible
+        if (commentsWebView != null && commentsWebView.getVisibility() == View.VISIBLE) {
+            String chatUrl = String.format("https://chat.vebotv.me/?room=%s", syncKey);
+            commentsWebView.loadUrl(chatUrl);
+        }
     }
 
     private void allowAllSSL() {
@@ -680,7 +695,15 @@ public class PlayerActivity extends AppCompatActivity {
                 );
             });
 
-            Log.d("PlayerActivity", "checkAndUpdateMatches: size=" + allMatches.size());
+            // Debug sorted matches
+            Log.d("PlayerActivity", "Sorted matches:");
+            for (Match match : allMatches) {
+                Log.d("PlayerActivity", "Match - id: " + match.getId() + 
+                      ", sync: " + match.getSync() + 
+                      ", from: " + match.getFrom() +
+                      ", sport: " + match.getSportType());
+            }
+
             runOnUiThread(() -> {
                 playerControlView.setMatches(allMatches);
             });
