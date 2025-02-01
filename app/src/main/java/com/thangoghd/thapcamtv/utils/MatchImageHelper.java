@@ -56,26 +56,39 @@ public class MatchImageHelper {
     }
     
     private static boolean isSimilarTitles(String title1, String title2) {
-        // Simple similarity check - can be improved with more sophisticated algorithms
-        if (title1.equals(title2)) return true;
+        if (title1 == null || title2 == null) return false;
         
-        // Check if one title contains the other
-        if (title1.contains(title2) || title2.contains(title1)) return true;
+        // Normalize titles
+        title1 = title1.toLowerCase().trim();
+        title2 = title2.toLowerCase().trim();
         
-        // Split titles into words and check for common words
-        String[] words1 = title1.split("\\s+");
-        String[] words2 = title2.split("\\s+");
+        // Check if both titles contain "vs"
+        boolean hasVs1 = title1.contains("vs");
+        boolean hasVs2 = title2.contains("vs");
         
-        int commonWords = 0;
-        for (String word1 : words1) {
-            for (String word2 : words2) {
-                if (word1.equals(word2) && word1.length() > 2) { // ignore short words
-                    commonWords++;
-                }
-            }
+        // If neither has "vs", just compare the titles directly
+        if (!hasVs1 && !hasVs2) {
+            return title1.equals(title2);
         }
         
-        // If more than 50% of words match
-        return commonWords >= Math.min(words1.length, words2.length) / 2;
+        // If only one has "vs", titles are different
+        if (hasVs1 != hasVs2) {
+            return false;
+        }
+        
+        // Both have "vs", split and compare team names
+        String[] teams1 = title1.split("vs");
+        String[] teams2 = title2.split("vs");
+        
+        if (teams1.length != 2 || teams2.length != 2) {
+            return false;
+        }
+        
+        String home1 = teams1[0].trim();
+        String away1 = teams1[1].trim();
+        String home2 = teams2[0].trim();
+        String away2 = teams2[1].trim();
+        
+        return home1.equals(home2) || away1.equals(away2) || home1.equals(away2) || home2.equals(away1);
     }
 }
