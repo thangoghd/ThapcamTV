@@ -24,7 +24,7 @@ public class SimpleMatchAdapter extends RecyclerView.Adapter<SimpleMatchAdapter.
     private final OnMatchSelectedListener listener;
 
     public interface OnMatchSelectedListener {
-        void onMatchSelected(Match match);
+        void onMatchSelected(Match match, String from);
     }
 
     public SimpleMatchAdapter(Context context, OnMatchSelectedListener listener) {
@@ -86,7 +86,8 @@ public class SimpleMatchAdapter extends RecyclerView.Adapter<SimpleMatchAdapter.
             itemView.setOnClickListener(v -> {
                 int position = getAdapterPosition();
                 if (position != RecyclerView.NO_POSITION && listener != null) {
-                    listener.onMatchSelected(matches.get(position));
+                    Match match = matches.get(position);
+                    listener.onMatchSelected(match, match.getFrom());
                 }
             });
         }

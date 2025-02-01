@@ -22,33 +22,8 @@
                 android:id="@+id/player_view"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                app:use_controller="true"
-                app:show_buffering="when_playing">
-
-                <LinearLayout
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_gravity="bottom|end"
-                    android:layout_marginEnd="16dp"
-                    android:layout_marginBottom="32dp"
-                    android:orientation="horizontal">
-
-                    <ImageButton
-                        android:id="@+id/chat_toggle_button"
-                        android:layout_width="50dp"
-                        android:layout_height="50dp"
-                        android:layout_marginEnd="8dp"
-                        android:background="?android:attr/selectableItemBackground"
-                        android:src="@drawable/option_chat_enable"
-                        tools:visibility="visible" />
-
-                    <Spinner
-                        android:id="@+id/quality_spinner"
-                        android:layout_width="match_parent"
-                        android:layout_height="match_parent"
-                        tools:visibility="visible" />
-                </LinearLayout>
-            </com.google.android.exoplayer2.ui.PlayerView>
+                app:use_controller="false"
+                app:show_buffering="when_playing"/>
 
             <ProgressBar
                 android:id="@+id/loading_progress"
@@ -56,6 +31,13 @@
                 android:layout_height="wrap_content"
                 android:layout_gravity="center"
                 android:visibility="gone" />
+
+            <!-- Custom Player Controls -->
+            <com.thangoghd.thapcamtv.views.PlayerControlView
+                android:id="@+id/player_controls"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_gravity="bottom"/>
         </FrameLayout>
 
         <WebView
@@ -63,26 +45,8 @@
             android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_weight="0.3"
+            android:focusable="false"
+            android:focusableInTouchMode="false"
             android:visibility="gone" />
     </LinearLayout>
-
-    <!-- Match List Overlay -->
-    <FrameLayout
-        android:id="@+id/match_list_overlay"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_gravity="bottom"
-        android:visibility="gone"
-        android:background="#80000000">
-
-        <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/matches_recycler_view"
-            android:layout_width="match_parent"
-            android:layout_height="200dp"
-            android:clipToPadding="false"
-            android:paddingStart="16dp"
-            android:paddingEnd="16dp"
-            android:paddingTop="16dp"
-            android:paddingBottom="16dp"/>
-    </FrameLayout>
 </FrameLayout>

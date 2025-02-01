@@ -1,31 +1,23 @@
 package com.thangoghd.thapcamtv;
 
-import android.graphics.Rect;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
-import android.util.TypedValue;
 import android.view.KeyEvent;
+import android.view.MotionEvent;
 import android.view.View;
-import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
-import android.widget.AdapterView;
-import android.widget.ArrayAdapter;
-import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
-import android.widget.Spinner;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.recyclerview.widget.GridLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.exoplayer2.ExoPlayer;
 import com.google.android.exoplayer2.MediaItem;
@@ -34,11 +26,11 @@ import com.google.android.exoplayer2.Player;
 import com.google.android.exoplayer2.source.hls.HlsMediaSource;
 import com.google.android.exoplayer2.ui.PlayerView;
 import com.google.android.exoplayer2.upstream.DefaultHttpDataSource;
+import com.google.android.exoplayer2.upstream.HttpDataSource;
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
-import com.thangoghd.thapcamtv.adapters.SimpleMatchAdapter;
 import com.thangoghd.thapcamtv.api.ApiManager;
 import com.thangoghd.thapcamtv.api.RetrofitClient;
 import com.thangoghd.thapcamtv.api.SportApi;
@@ -46,6 +38,7 @@ import com.thangoghd.thapcamtv.models.Match;
 import com.thangoghd.thapcamtv.repositories.RepositoryCallback;
 import com.thangoghd.thapcamtv.repositories.SportRepository;
 import com.thangoghd.thapcamtv.response.ReplayLinkResponse;
+import com.thangoghd.thapcamtv.views.PlayerControlView;
 
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
@@ -69,24 +62,26 @@ public class PlayerActivity extends AppCompatActivity {
     private static PlayerActivity instance;
     private ExoPlayer player;
     private PlayerView playerView;
+    private PlayerControlView playerControlView;
     private Map<String, String> qualityMap;
-    private Spinner qualitySpinner;
     private ProgressBar loadingProgressBar;
     private WebView commentsWebView;
-    private ImageButton chatToggleButton;
     private boolean isChatVisible = false;
-    private RecyclerView matchesRecyclerView;
-    private SimpleMatchAdapter matchesAdapter;
-    private View matchListOverlay;
-    private final List<Match> liveMatches = new ArrayList<>();
-    private boolean isOverlayVisible = false;
-    private final Handler hideHandler = new Handler(Looper.getMainLooper());
+    private final Handler progressHandler = new Handler(Looper.getMainLooper());
+    private final Runnable updateProgressAction = new Runnable() {
+        @Override
+        public void run() {
+            if (player != null) {
+                playerControlView.updateProgress(player.getCurrentPosition(), player.getDuration());
+            }
+            progressHandler.postDelayed(this, 1000);
+        }
+    };
 
     private final Runnable hideRunnable = new Runnable() {
         @Override
         public void run() {
-            qualitySpinner.setVisibility(View.INVISIBLE);
-            chatToggleButton.setVisibility(View.INVISIBLE);
+            playerControlView.hide();
         }
     };
 
@@ -122,17 +117,17 @@ public class PlayerActivity extends AppCompatActivity {
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
     
         playerView = findViewById(R.id.player_view);
-        qualitySpinner = findViewById(R.id.quality_spinner);
+        playerControlView = findViewById(R.id.player_controls);
         loadingProgressBar = findViewById(R.id.loading_progress);
         commentsWebView = findViewById(R.id.comments_webview);
-        chatToggleButton = findViewById(R.id.chat_toggle_button);
-        matchListOverlay = findViewById(R.id.match_list_overlay);
-        matchesRecyclerView = findViewById(R.id.matches_recycler_view);
+
+        setupPlayerControlView();
 
         String videoUrl = getIntent().getStringExtra("replay_url");
         String sourceType = getIntent().getStringExtra("source_type");
         String matchId = getIntent().getStringExtra("match_id");
         String sportType = getIntent().getStringExtra("sport_type");
+        String matchFrom = getIntent().getStringExtra("from");
         boolean isLoading = getIntent().getBooleanExtra("is_loading", false);
         boolean showQualitySpinner = getIntent().getBooleanExtra("show_quality_spinner", false);
 
@@ -151,69 +146,84 @@ public class PlayerActivity extends AppCompatActivity {
 
         Log.d("PlayerActivity", "onCreate - sourceType: " + sourceType + 
               ", matchId: " + matchId + ", sportType: " + sportType + 
-              ", isLoading: " + isLoading + ", from: " + getIntent().getStringExtra("from"));
+              ", isLoading: " + isLoading + ", from: " + matchFrom);
 
         if (isLoading && matchId != null) {
             showLoading(true);
-            fetchMatchStreamUrl(matchId, sportType);
+            fetchMatchStreamUrl(matchId, matchFrom);
         } else {
             handleVideoSource(sourceType, videoUrl);
         }
 
         if (!showQualitySpinner) {
-            qualitySpinner.setVisibility(View.GONE);
-            chatToggleButton.setVisibility(View.GONE);
-        }
-
-        qualitySpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-            @Override
-            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-                String quality = parent.getItemAtPosition(position).toString();
-                String streamUrl = qualityMap.get(quality);
-                if (streamUrl != null) {
-                    playStream(streamUrl);
-                }
-                resetHideTimer();
-            }
-
-            @Override
-            public void onNothingSelected(AdapterView<?> parent) {
-                // Nothing to do
-            }
-        });
-
-        setupRecyclerView();
-
-        // Get intent data and start playback
-        String matchIdFromIntent = getIntent().getStringExtra("matchId");
-        String sportTypeFromIntent = getIntent().getStringExtra("sportType");
-        if (matchIdFromIntent != null && sportTypeFromIntent != null) {
-            fetchMatchStreamUrl(matchIdFromIntent, sportTypeFromIntent);
+            playerControlView.hideQualitySpinner();
         }
     }
 
-    private void setupRecyclerView() {
-        GridLayoutManager layoutManager = new GridLayoutManager(this, 4);
-        matchesRecyclerView.setLayoutManager(layoutManager);
-        
-        matchesAdapter = new SimpleMatchAdapter(this, 
-            match -> {
-                hideOverlay();
-                fetchMatchStreamUrl(match.getId(), match.getSportType());
-            });
-        
-        matchesRecyclerView.setAdapter(matchesAdapter);
-        
-        // Add spacing between items
-        int spacing = getResources().getDimensionPixelSize(R.dimen.grid_spacing);
-        matchesRecyclerView.addItemDecoration(new RecyclerView.ItemDecoration() {
+    private void setupPlayerControlView() {
+        playerControlView.setCallback(new PlayerControlView.PlayerControlCallback() {
             @Override
-            public void getItemOffsets(@NonNull Rect outRect, @NonNull View view, 
-                                     @NonNull RecyclerView parent, @NonNull RecyclerView.State state) {
-                outRect.left = spacing;
-                outRect.right = spacing;
-                outRect.top = spacing;
-                outRect.bottom = spacing;
+            public void onVisibilityChanged(boolean isVisible) {
+                // Load matches when controls become visible
+                if (isVisible) {
+                    loadLiveMatches();
+                }
+            }
+
+            @Override
+            public void onMatchSelected(Match match, String from) {
+                if (match != null) {
+                    String matchId = match.getId();
+                    fetchMatchStreamUrl(matchId, from);
+                }
+            }
+
+            @Override
+            public void onPlayPause(boolean isPlaying) {
+                if (player != null) {
+                    if (isPlaying) {
+                        player.play();
+                    } else {
+                        player.pause();
+                    }
+                }
+            }
+
+            @Override
+            public void onRewind() {
+                if (player != null) {
+                    player.seekTo(Math.max(0, player.getCurrentPosition() - 10000));
+                }
+            }
+
+            @Override
+            public void onForward() {
+                if (player != null) {
+                    player.seekTo(Math.min(player.getDuration(), player.getCurrentPosition() + 10000));
+                }
+            }
+
+            @Override
+            public void onChatToggle() {
+                toggleChat();
+            }
+
+            @Override
+            public void onQualitySelected(int position) {
+                if (qualityMap != null && position < qualityMap.size()) {
+                    String quality = new ArrayList<>(qualityMap.keySet()).get(position);
+                    String streamUrl = qualityMap.get(quality);
+                    if (streamUrl != null) {
+                        playStream(streamUrl);
+                    }
+                }
+            }
+
+            @Override
+            public void onSeekTo(long position) {
+                if (player != null) {
+                    player.seekTo(position);
+                }
             }
         });
     }
@@ -223,7 +233,6 @@ public class PlayerActivity extends AppCompatActivity {
             showLoading(false);
             if (streamUrls != null && !streamUrls.isEmpty()) {
                 this.qualityMap = streamUrls;
-                setupChatToggle();
                 setupQualitySpinner();
             } else {
                 showError("Không có luồng phát sóng.");
@@ -231,10 +240,10 @@ public class PlayerActivity extends AppCompatActivity {
         });
     }
 
-    private void handleVideoSource(String sourceType, String videoUrl) {
+    private void handleVideoSource(String sourceType, String url) {
         if ("replay".equals(sourceType)) {
-            if (videoUrl != null && !videoUrl.isEmpty()) {
-                playStream(videoUrl);
+            if (url != null && !url.isEmpty()) {
+                playStream(url);
             } else {
                 showError("Không có luồng phát sóng.");
             }
@@ -248,35 +257,26 @@ public class PlayerActivity extends AppCompatActivity {
     }
 
     private void setupQualitySpinner() {
-        qualitySpinner.setVisibility(View.VISIBLE);
-        ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_dropdown_item, new ArrayList<>(qualityMap.keySet()));
-        qualitySpinner.setAdapter(adapter);
-    
-        String initialQuality = qualityMap.containsKey("FullHD") ? "FullHD" : qualitySpinner.getItemAtPosition(0).toString();
-        int initialPosition = new ArrayList<>(qualityMap.keySet()).indexOf(initialQuality);
-        qualitySpinner.setSelection(initialPosition);
-    }
-    
-    private void resetHideTimer() {
-        qualitySpinner.setVisibility(View.VISIBLE);
-        chatToggleButton.setVisibility(View.VISIBLE);
-        hideHandler.removeCallbacks(hideRunnable);
-        hideHandler.postDelayed(hideRunnable, 5000);
+        if (qualityMap != null && !qualityMap.isEmpty()) {
+            String[] qualities = qualityMap.keySet().toArray(new String[0]);
+            playerControlView.setQualityOptions(qualities);
+
+            // Select FullHD by default if available
+            String initialQuality = qualityMap.containsKey("FullHD") ? "FullHD" : qualities[0];
+            String streamUrl = qualityMap.get(initialQuality);
+            if (streamUrl != null) {
+                playStream(streamUrl);
+            }
+        }
     }
 
     @Override
     public void onUserInteraction() {
         super.onUserInteraction();
-        resetHideTimer();
     }
 
     private void playStream(String url) {
-        if (player != null) {
-            player.release();
-        }
-
-        player = new ExoPlayer.Builder(this).build();
-        playerView.setPlayer(player);
+        initializePlayer();
 
         // Configure headers based on thapcam app
         Map<String, String> headers = new HashMap<>();
@@ -305,16 +305,42 @@ public class PlayerActivity extends AppCompatActivity {
         player.prepare();
         player.setPlayWhenReady(true);
 
+        // Start progress updates
+        progressHandler.removeCallbacks(updateProgressAction);
+        progressHandler.post(updateProgressAction);
+
         player.addListener(new Player.Listener() {
             @Override
             public void onPlayerError(@NonNull PlaybackException error) {
                 Log.e("PlayerActivity", "Không thể phát video: " + error.getMessage() + " | URL: " + url);
-                String errorMessage = error.getCause() instanceof com.google.android.exoplayer2.upstream.HttpDataSource.InvalidResponseCodeException ? 
-                    "Không thể phát video! (Mã lỗi: " + ((com.google.android.exoplayer2.upstream.HttpDataSource.InvalidResponseCodeException) error.getCause()).responseCode + ")" :
+                String errorMessage = error.getCause() instanceof HttpDataSource.InvalidResponseCodeException ? 
+                    "Không thể phát video! (Mã lỗi: " + ((HttpDataSource.InvalidResponseCodeException) error.getCause()).responseCode + ")" :
                     "Không thể phát video!";
                 Toast.makeText(PlayerActivity.this, errorMessage, Toast.LENGTH_SHORT).show();
             }
         });
+    }
+
+    private void initializePlayer() {
+        if (player == null) {
+            player = new ExoPlayer.Builder(this).build();
+            player.setPlayWhenReady(true); // Auto play when ready
+            player.addListener(new Player.Listener() {
+                @Override
+                public void onPlaybackStateChanged(int state) {
+                    if (state == Player.STATE_READY) {
+                        showLoading(false);
+                        playerControlView.setPlaying(player.isPlaying());
+                    }
+                }
+
+                @Override
+                public void onIsPlayingChanged(boolean isPlaying) {
+                    playerControlView.setPlaying(isPlaying);
+                }
+            });
+            playerView.setPlayer(player);
+        }
     }
 
     private void showLoading(boolean show) {
@@ -334,6 +360,7 @@ public class PlayerActivity extends AppCompatActivity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
+        progressHandler.removeCallbacks(updateProgressAction);
         if (player != null) {
             player.release();
         }
@@ -348,6 +375,7 @@ public class PlayerActivity extends AppCompatActivity {
     @Override
     protected void onPause() {
         super.onPause();
+        playerControlView.setAutoHideEnabled(false);
         if (player != null) {
             player.setPlayWhenReady(false);
         }
@@ -357,6 +385,7 @@ public class PlayerActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
+        playerControlView.setAutoHideEnabled(true);
         if (player != null) {
             player.setPlayWhenReady(true);
         }
@@ -371,13 +400,12 @@ public class PlayerActivity extends AppCompatActivity {
         }
     }
 
-    private void fetchMatchStreamUrl(String matchId, String sportType) {
-        Log.d("PlayerActivity", "Fetching stream URL for matchId: " + matchId + ", sportType: " + sportType);
-        
+    private void fetchMatchStreamUrl(String matchId, String from) {
+        Log.d("PlayerActivity", "Fetching stream URL for matchId: " + matchId + ", from: " + from);
+
         SportApi api;
         Call<JsonObject> call;
-        
-        String from = getIntent().getStringExtra("from");
+
         if ("vebo".equals(from)) {
             api = ApiManager.getSportApi(true); // vebo.xyz
             call = api.getVeboStreamUrl(matchId);
@@ -404,7 +432,7 @@ public class PlayerActivity extends AppCompatActivity {
                     showError("Không thể tải dữ liệu trận đấu.");
                 }
             }
-            
+
             @Override
             public void onFailure(@NonNull Call<JsonObject> call, @NonNull Throwable t) {
                 Log.e("PlayerActivity", "Stream URL API call failed", t);
@@ -436,7 +464,7 @@ public class PlayerActivity extends AppCompatActivity {
             HashMap<String, String> qualityMap = new HashMap<>();
             for (JsonElement element : playUrls) {
                 if (!element.isJsonObject()) continue;
-                
+
                 JsonObject urlObject = element.getAsJsonObject();
                 if (!urlObject.has("name") || !urlObject.has("url")) continue;
 
@@ -460,7 +488,7 @@ public class PlayerActivity extends AppCompatActivity {
 
     private void fetchHighlightVideoFromChannel(String id) {
         Log.d("PlayerActivity", "Fetching highlight video for id: " + id);
-        
+
         ApiManager.getSportApi(true).getReplayDetails(id).enqueue(new Callback<ReplayLinkResponse>() {
             @Override
             public void onResponse(@NonNull Call<ReplayLinkResponse> call, @NonNull Response<ReplayLinkResponse> response) {
@@ -470,8 +498,7 @@ public class PlayerActivity extends AppCompatActivity {
                     runOnUiThread(() -> {
                         showLoading(false);
                         handleVideoSource("replay", videoUrl);
-                        qualitySpinner.setVisibility(View.GONE);
-                        chatToggleButton.setVisibility(View.GONE);
+                        playerControlView.hideQualitySpinner();
                     });
                 } else {
                     Log.e("PlayerActivity", "Highlight video API error: " + response.code());
@@ -487,44 +514,38 @@ public class PlayerActivity extends AppCompatActivity {
         });
     }
 
-    private void setupChatToggle() {
-        ViewGroup.LayoutParams spinnerParams = qualitySpinner.getLayoutParams();
+    private void toggleChat() {
+        isChatVisible = !isChatVisible;
         
-        chatToggleButton.setOnClickListener(v -> {
-            isChatVisible = !isChatVisible;
-            chatToggleButton.setImageResource(isChatVisible ? 
-                R.drawable.option_chat_disable : R.drawable.option_chat_enable);
-            spinnerParams.width = isChatVisible ? (int) TypedValue.applyDimension(
-                TypedValue.COMPLEX_UNIT_DIP, 50, getResources().getDisplayMetrics()) : ViewGroup.LayoutParams.MATCH_PARENT;
+        // Update PlayerControlView
+        playerControlView.updateChatIcon(isChatVisible);
+        playerControlView.setQualitySpinnerWidth(isChatVisible);
 
-            if (isChatVisible) {
-                // Get sync key from intent
-                String syncKey = getIntent().getStringExtra("sync_key");
-                String chatUrl = String.format("https://chat.vebotv.me/?room=%s",
-                        syncKey);
+        if (isChatVisible) {
+            // Get sync key from intent
+            String syncKey = getIntent().getStringExtra("sync_key");
+            String chatUrl = String.format("https://chat.vebotv.me/?room=%s", syncKey);
 
-                // Setup WebView only when becoming visible
-                commentsWebView.getSettings().setJavaScriptEnabled(true);
-                commentsWebView.setWebViewClient(new WebViewClient());
-                commentsWebView.loadUrl(chatUrl);
-                commentsWebView.setVisibility(View.VISIBLE);
-                Log.d("PlayerActivity", "Loading chat URL: " + chatUrl);
-                
-            } else {
-                // Clean up WebView when hidden
-                commentsWebView.stopLoading();
-                commentsWebView.loadUrl("about:blank");
-                commentsWebView.clearHistory();
-                commentsWebView.clearCache(true);
-                commentsWebView.setVisibility(View.GONE);
-            }
-            
-            // Adjust player container weight
-            View playerContainer = findViewById(R.id.player_container);
-            LinearLayout.LayoutParams params = (LinearLayout.LayoutParams) playerContainer.getLayoutParams();
-            params.weight = isChatVisible ? 0.9f : 1.0f;
-            playerContainer.setLayoutParams(params);
-        });
+            // Setup WebView
+            commentsWebView.getSettings().setJavaScriptEnabled(true);
+            commentsWebView.setWebViewClient(new WebViewClient());
+            commentsWebView.loadUrl(chatUrl);
+            commentsWebView.setVisibility(View.VISIBLE);
+            Log.d("PlayerActivity", "Loading chat URL: " + chatUrl);
+        } else {
+            // Clean up WebView
+            commentsWebView.stopLoading();
+            commentsWebView.loadUrl("about:blank");
+            commentsWebView.clearHistory();
+            commentsWebView.clearCache(true);
+            commentsWebView.setVisibility(View.GONE);
+        }
+        
+        // Adjust player container weight
+        View playerContainer = findViewById(R.id.player_container);
+        LinearLayout.LayoutParams params = (LinearLayout.LayoutParams) playerContainer.getLayoutParams();
+        params.weight = isChatVisible ? 0.9f : 1.0f;
+        playerContainer.setLayoutParams(params);
     }
 
     private void allowAllSSL() {
@@ -546,44 +567,35 @@ public class PlayerActivity extends AppCompatActivity {
 
     @Override
     public boolean onKeyDown(int keyCode, KeyEvent event) {
-        if (keyCode == KeyEvent.KEYCODE_DPAD_DOWN) {
-            if (!isOverlayVisible) {
-                showOverlay();
-                return true;
+        // If controls are not visible, show them first for any key press
+        if (!playerControlView.isVisible()) {
+            switch (keyCode) {
+                case KeyEvent.KEYCODE_DPAD_CENTER:
+                case KeyEvent.KEYCODE_ENTER:
+                case KeyEvent.KEYCODE_DPAD_LEFT:
+                case KeyEvent.KEYCODE_DPAD_RIGHT:
+                case KeyEvent.KEYCODE_DPAD_UP:
+                case KeyEvent.KEYCODE_DPAD_DOWN:
+                    playerControlView.show();
+                    return true;
             }
-        } else if (keyCode == KeyEvent.KEYCODE_BACK) {
-            if (isOverlayVisible) {
-                hideOverlay();
-                return true;
-            }
+        }
+        
+        // Let PlayerControlView handle all UI-related keys first
+        if (playerControlView.onKeyDown(keyCode, event)) {
+            return true;
         }
         return super.onKeyDown(keyCode, event);
     }
 
-    private void showOverlay() {
-        // Load live matches
-        loadLiveMatches();
-        
-        // Show with animation
-        matchListOverlay.setVisibility(View.VISIBLE);
-        matchListOverlay.setTranslationY(matchListOverlay.getHeight());
-        matchListOverlay.animate()
-                .translationY(0)
-                .setDuration(250)
-                .start();
-        
-        isOverlayVisible = true;
-    }
-
-    private void hideOverlay() {
-        matchListOverlay.animate()
-                .translationY(matchListOverlay.getHeight())
-                .setDuration(250)
-                .withEndAction(() -> {
-                    matchListOverlay.setVisibility(View.GONE);
-                    isOverlayVisible = false;
-                })
-                .start();
+    @Override
+    public boolean dispatchTouchEvent(MotionEvent ev) {
+        // Show controls on any touch event if they're hidden
+        if (!playerControlView.isVisible()) {
+            playerControlView.show();
+            return true;
+        }
+        return super.dispatchTouchEvent(ev);
     }
 
     private void loadLiveMatches() {
@@ -603,9 +615,7 @@ public class PlayerActivity extends AppCompatActivity {
                 synchronized (allMatches) {
                     if (result != null) {
                         for (Match match : result) {
-                            if (match.getLive() && 
-                                !"finished".equalsIgnoreCase(match.getMatchStatus()) &&
-                                !"canceled".equalsIgnoreCase(match.getMatchStatus())) {
+                            if (match.getLive()) {
                                 match.setFrom("vebo");
                                 allMatches.add(match);
                             }
@@ -670,7 +680,10 @@ public class PlayerActivity extends AppCompatActivity {
                 );
             });
 
-            runOnUiThread(() -> matchesAdapter.updateMatches(allMatches));
+            Log.d("PlayerActivity", "checkAndUpdateMatches: size=" + allMatches.size());
+            runOnUiThread(() -> {
+                playerControlView.setMatches(allMatches);
+            });
         }
     }
 }

@@ -191,6 +191,7 @@ public class LiveChannelHelper {
         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         intent.putExtra("source_type", "live");
         intent.putExtra("is_loading", true);
+        intent.putExtra("show_quality_spinner", true); 
         intent.putExtra("match_id", match.getId());
         intent.putExtra("sport_type", match.getSportType());
         intent.putExtra("sync_key", match.getSync() != null ? match.getSync() : match.getId());

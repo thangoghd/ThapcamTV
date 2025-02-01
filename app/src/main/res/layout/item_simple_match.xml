@@ -28,7 +28,7 @@
             android:layout_width="60dp"
             android:layout_height="60dp"
             android:contentDescription="@null"
-            android:layout_marginStart="30dp"
+            android:layout_marginStart="25dp"
             android:scaleType="fitCenter"/>
     </LinearLayout>
 
