@@ -70,6 +70,7 @@ public class PlayerControlView extends FrameLayout {
     private String[] qualities;
     private int currentQualityIndex = 0;
     private boolean isMatchListVisible = false;
+    private boolean showQualitySpinner = false;
 
     private SimpleMatchAdapter matchAdapter;
     private List<Match> matches = new ArrayList<>();
@@ -468,7 +469,7 @@ public class PlayerControlView extends FrameLayout {
     }
 
     private void showMatchListPreview() {
-        if (matchListContainer != null) {
+        if (matchListContainer != null && showQualitySpinner) {
             isPreviewMode = true;
             matchListContainer.setVisibility(View.VISIBLE);
             ViewGroup.LayoutParams params = matchListContainer.getLayoutParams();
@@ -479,7 +480,7 @@ public class PlayerControlView extends FrameLayout {
     }
 
     private void showMatchListFull() {
-        if (matchListContainer != null) {
+        if (matchListContainer != null && showQualitySpinner) {
             isPreviewMode = false;
             isMatchListVisible = true;
             matchListContainer.setVisibility(View.VISIBLE);
@@ -535,6 +536,13 @@ public class PlayerControlView extends FrameLayout {
         }
     }
 
+    public void setShowQualitySpinner(boolean show) {
+        this.showQualitySpinner = show;
+        if (!show && matchListContainer != null) {
+            matchListContainer.setVisibility(View.GONE);
+        }
+    }
+
     @Override
     public boolean onKeyDown(int keyCode, KeyEvent event) {
         Log.d(TAG, "onKeyDown: keyCode=" + keyCode + ", isVisible=" + isVisible + ", isMatchListVisible=" + isMatchListVisible);
@@ -549,10 +557,22 @@ public class PlayerControlView extends FrameLayout {
                 break;
 
             case KeyEvent.KEYCODE_DPAD_DOWN:
-                if (isVisible && !isMatchListVisible) {
+                if (isVisible) {
                     View focusedView = findFocus();
                     Log.d(TAG, "onKeyDown: focusedView=" + (focusedView != null ? focusedView.getId() : "null"));
+                    
                     if (focusedView != null && 
+                        (focusedView == playPauseButton || 
+                         focusedView == rewindButton || 
+                         focusedView == forwardButton)) {
+                        if (!showQualitySpinner) {
+                            focusedView.requestFocus();
+                            return true;
+                        }
+                    }
+                    
+                    if (!isMatchListVisible && showQualitySpinner && 
+                        focusedView != null && 
                         (focusedView == playPauseButton || 
                          focusedView == rewindButton || 
                          focusedView == forwardButton || 
@@ -565,7 +585,7 @@ public class PlayerControlView extends FrameLayout {
                 break;
 
             case KeyEvent.KEYCODE_DPAD_UP:
-                if (isVisible && isMatchListVisible) {
+                if (isVisible && isMatchListVisible && showQualitySpinner) {
                     View focusedView = findFocus();
                     // Check if focus is in matches_recycler_view
                     if (focusedView != null && 

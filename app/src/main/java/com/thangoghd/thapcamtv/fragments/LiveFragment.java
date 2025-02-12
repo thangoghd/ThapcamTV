@@ -278,7 +278,7 @@ public class LiveFragment extends Fragment {
             });
             // Set LayoutManager for recyclerViewMatches
             recyclerViewMatches.setLayoutManager(new GridLayoutManager(getContext(), 3));
-            recyclerViewMatches.addItemDecoration(new SpaceItemDecoration(0, 0, 0, 23));
+            recyclerViewMatches.addItemDecoration(new SpaceItemDecoration(0, 0, 0, 35));
             recyclerViewMatches.setAdapter(matchesAdapter);
         } else {
             // Update the adapter with new matches

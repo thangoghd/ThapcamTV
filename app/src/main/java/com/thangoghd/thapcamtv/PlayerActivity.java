@@ -164,6 +164,9 @@ public class PlayerActivity extends AppCompatActivity {
     }
 
     private void setupPlayerControlView() {
+        boolean showQualitySpinner = getIntent().getBooleanExtra("show_quality_spinner", false);
+        playerControlView.setShowQualitySpinner(showQualitySpinner);
+        
         playerControlView.setCallback(new PlayerControlView.PlayerControlCallback() {
             @Override
             public void onVisibilityChanged(boolean isVisible) {
@@ -292,8 +295,11 @@ public class PlayerActivity extends AppCompatActivity {
         headers.put("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8");
         headers.put("Accept-Language", "vi-VN,vi;q=0.8,en-US;q=0.5,en;q=0.3");
         headers.put("Connection", "keep-alive");
-        headers.put("Referer", refererUrl);
-        headers.put("Origins", refererUrl);
+        boolean showQualitySpinner = getIntent().getBooleanExtra("show_quality_spinner", false);
+        if (showQualitySpinner) {
+            headers.put("Referer", refererUrl);
+            headers.put("Origins", refererUrl);
+        }
 
         // Create DataSource Factory with headers
         DefaultHttpDataSource.Factory dataSourceFactory = new DefaultHttpDataSource.Factory()
@@ -320,10 +326,14 @@ public class PlayerActivity extends AppCompatActivity {
             @Override
             public void onPlayerError(@NonNull PlaybackException error) {
                 Log.e("PlayerActivity", "Không thể phát video: " + error.getMessage() + " | URL: " + url);
+                String errorCode = String.valueOf(((HttpDataSource.InvalidResponseCodeException) error.getCause()).responseCode);
                 String errorMessage = error.getCause() instanceof HttpDataSource.InvalidResponseCodeException ? 
-                    "Không thể phát video! (Mã lỗi: " + ((HttpDataSource.InvalidResponseCodeException) error.getCause()).responseCode + ")" :
+                    "Không thể phát video! (Mã lỗi: " + errorCode + ")" :
                     "Không thể phát video!";
                 Toast.makeText(PlayerActivity.this, errorMessage, Toast.LENGTH_SHORT).show();
+                if (errorCode == "403") {
+                    RetrofitClient.fetchConfig();
+                }
             }
         });
     }

@@ -11,8 +11,8 @@ android {
         applicationId = "com.thangoghd.thapcamtv"
         minSdk = 24
         targetSdk = 34
-        versionCode = 13
-        versionName = "1.2.4"
+        versionCode = 14
+        versionName = "1.2.5"
 
     }
 
