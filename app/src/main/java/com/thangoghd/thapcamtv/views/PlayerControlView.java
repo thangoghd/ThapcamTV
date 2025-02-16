@@ -1,6 +1,7 @@
 package com.thangoghd.thapcamtv.views;
 
 import android.content.Context;
+import android.graphics.Color;
 import android.graphics.Rect;
 import android.os.Handler;
 import android.os.Looper;
@@ -14,13 +15,16 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.animation.AccelerateDecelerateInterpolator;
 import android.view.animation.AnimationUtils;
+import android.widget.ArrayAdapter;
 import android.widget.FrameLayout;
 import android.widget.ImageButton;
+import android.widget.ListView;
 import android.widget.SeekBar;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
+import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -422,18 +426,37 @@ public class PlayerControlView extends FrameLayout {
         AlertDialog.Builder builder = new AlertDialog.Builder(getContext(), R.style.AlertDialogTheme);
         builder.setTitle("Chất lượng");
 
-        // Create list with radio buttons, highlight current quality
-        builder.setSingleChoiceItems(qualities, currentQualityIndex, (dialog, which) -> {
-            if (currentQualityIndex != which) {
-                currentQualityIndex = which;
+        ListView listView = new ListView(getContext());
+        ArrayAdapter<String> adapter = new ArrayAdapter<String>(getContext(), android.R.layout.simple_list_item_single_choice, qualities) {
+            @Override
+            public View getView(int position, View convertView, ViewGroup parent) {
+                View view = super.getView(position, convertView, parent);
+                if (position == currentQualityIndex) {
+                    view.setBackgroundColor(ContextCompat.getColor(getContext(), R.color.transparent));
+                } else {
+                    view.setBackgroundColor(Color.TRANSPARENT);
+                }
+                return view;
+            }
+        };
+        listView.setAdapter(adapter);
+        listView.setChoiceMode(ListView.CHOICE_MODE_SINGLE);
+        listView.setItemChecked(currentQualityIndex, true);
+
+        builder.setView(listView);
+
+        AlertDialog dialog = builder.create();
+
+        listView.setOnItemClickListener((parent, view, position, id) -> {
+            if (currentQualityIndex != position) {
+                currentQualityIndex = position;
                 if (playerCallback != null) {
-                    playerCallback.onQualitySelected(which);
+                    playerCallback.onQualitySelected(position);
                 }
             }
             dialog.dismiss();
         });
 
-        AlertDialog dialog = builder.create();
         dialog.show();
     }
 

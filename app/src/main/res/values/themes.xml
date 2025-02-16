@@ -7,7 +7,7 @@
         <item name="android:selectableItemBackgroundBorderless">@drawable/selectable_item_background</item>
     </style>
 
-    <style name="AlertDialogTheme" parent="ThemeOverlay.AppCompat.Dialog.Alert">
+    <style name="AlertDialogTheme" parent="Theme.AppCompat.Dialog.Alert">
         <item name="android:background">#40000000</item>
         <item name="android:textColor">#FFFFFF</item>
         <item name="android:windowBackground">@android:color/transparent</item>
