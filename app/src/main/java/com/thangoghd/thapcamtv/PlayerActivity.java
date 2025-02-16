@@ -11,8 +11,10 @@ import android.view.View;
 import android.view.WindowManager;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
+import android.widget.FrameLayout;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -56,6 +58,9 @@ import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
+
+import android.view.LayoutInflater;
+import android.view.Gravity;
 
 public class PlayerActivity extends AppCompatActivity {
 
@@ -245,7 +250,7 @@ public class PlayerActivity extends AppCompatActivity {
                 this.qualityMap = streamUrls;
                 setupQualitySpinner();
             } else {
-                showError("Không có luồng phát sóng.");
+                showErrorDialog("Không có luồng phát sóng.");
             }
         });
     }
@@ -255,13 +260,13 @@ public class PlayerActivity extends AppCompatActivity {
             if (url != null && !url.isEmpty()) {
                 playStream(url);
             } else {
-                showError("Không có luồng phát sóng.");
+                showErrorDialog("Không có luồng phát sóng.");
             }
         } else if ("live".equals(sourceType)) {
             if (qualityMap != null && !qualityMap.isEmpty()) {
                 setupQualitySpinner();
             } else {
-                showError("Không có luồng phát sóng.");
+                showErrorDialog("Không có luồng phát sóng.");
             }
         }
     }
@@ -326,14 +331,15 @@ public class PlayerActivity extends AppCompatActivity {
             @Override
             public void onPlayerError(@NonNull PlaybackException error) {
                 Log.e("PlayerActivity", "Không thể phát video: " + error.getMessage() + " | URL: " + url);
-                String errorCode = String.valueOf(((HttpDataSource.InvalidResponseCodeException) error.getCause()).responseCode);
-                String errorMessage = error.getCause() instanceof HttpDataSource.InvalidResponseCodeException ? 
-                    "Không thể phát video! (Mã lỗi: " + errorCode + ")" :
-                    "Không thể phát video!";
-                Toast.makeText(PlayerActivity.this, errorMessage, Toast.LENGTH_SHORT).show();
-                if (errorCode == "403") {
-                    RetrofitClient.fetchConfig();
+                String errorMessage = "Không thể phát video!";
+                if (error.getCause() instanceof HttpDataSource.InvalidResponseCodeException) {
+                    int responseCode = ((HttpDataSource.InvalidResponseCodeException) error.getCause()).responseCode;
+                    errorMessage = "Không thể phát video! (Mã lỗi: " + responseCode + ")";
+                    if (responseCode == 403) {
+                        RetrofitClient.fetchConfig();
+                    }
                 }
+                showErrorDialog(errorMessage);
             }
         });
     }
@@ -369,9 +375,27 @@ public class PlayerActivity extends AppCompatActivity {
         }
     }
 
-    private void showError(String message) {
-        Toast.makeText(this, message, Toast.LENGTH_SHORT).show();
-        finish();
+    private void showErrorDialog(String message) {
+        View errorDialog = LayoutInflater.from(this).inflate(R.layout.dialog_error, null);
+        TextView errorMessage = errorDialog.findViewById(R.id.error_message);
+        errorMessage.setText(message);
+
+        FrameLayout playerContainer = findViewById(R.id.player_container);
+        if (playerContainer.indexOfChild(errorDialog) == -1) {
+            FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(
+                    FrameLayout.LayoutParams.WRAP_CONTENT,
+                    FrameLayout.LayoutParams.WRAP_CONTENT
+            );
+            params.gravity = Gravity.CENTER;
+            playerContainer.addView(errorDialog, params);
+        }
+
+        errorDialog.setVisibility(View.VISIBLE);
+        new Handler().postDelayed(() -> {
+            if (errorDialog != null) {
+                playerContainer.removeView(errorDialog);
+            }
+        }, 3000);
     }
 
     @Override
@@ -442,18 +466,18 @@ public class PlayerActivity extends AppCompatActivity {
                         parseJsonAndStartPlayer(jsonResponse);
                     } catch (Exception e) {
                         Log.e("PlayerActivity", "Error parsing stream URL response", e);
-                        showError("Có lỗi xảy ra khi tải dữ liệu");
+                        showErrorDialog("Có lỗi xảy ra khi tải dữ liệu");
                     }
                 } else {
                     Log.e("PlayerActivity", "Stream URL API error: " + response.code());
-                    showError("Không thể tải dữ liệu trận đấu.");
+                    showErrorDialog("Không thể tải dữ liệu trận đấu.");
                 }
             }
 
             @Override
             public void onFailure(@NonNull Call<JsonObject> call, @NonNull Throwable t) {
                 Log.e("PlayerActivity", "Stream URL API call failed", t);
-                showError("Không thể kết nối đến máy chủ.");
+                showErrorDialog("Không thể kết nối đến máy chủ.");
             }
         });
     }
@@ -467,14 +491,14 @@ public class PlayerActivity extends AppCompatActivity {
             // Check if data is null or play_urls is null/empty
             if (data == null || data.get("play_urls") == null || data.get("play_urls").isJsonNull()) {
                 Log.w("PlayerActivity", "No play URLs found in response");
-                showError("Trận đấu chưa được phát sóng.");
+                showErrorDialog("Trận đấu chưa được phát sóng.");
                 return;
             }
 
             JsonArray playUrls = data.getAsJsonArray("play_urls");
             if (playUrls == null || playUrls.isEmpty()) {
                 Log.w("PlayerActivity", "Empty play URLs array");
-                showError("Trận đấu chưa được phát sóng.");
+                showErrorDialog("Trận đấu chưa được phát sóng.");
                 return;
             }
 
@@ -495,11 +519,11 @@ public class PlayerActivity extends AppCompatActivity {
                 onStreamUrlReceived(qualityMap);
             } else {
                 Log.w("PlayerActivity", "No valid stream URLs found");
-                showError("Trận đấu chưa được phát sóng.");
+                showErrorDialog("Trận đấu chưa được phát sóng.");
             }
         } catch (Exception e) {
             Log.e("PlayerActivity", "Error parsing JSON response", e);
-            showError("Có lỗi xảy ra khi tải dữ liệu.");
+            showErrorDialog("Có lỗi xảy ra khi tải dữ liệu.");
         }
     }
 
@@ -519,14 +543,14 @@ public class PlayerActivity extends AppCompatActivity {
                     });
                 } else {
                     Log.e("PlayerActivity", "Highlight video API error: " + response.code());
-                    showError("Không thể lấy được luồng video");
+                    showErrorDialog("Không thể lấy được luồng video");
                 }
             }
 
             @Override
             public void onFailure(@NonNull Call<ReplayLinkResponse> call, @NonNull Throwable t) {
                 Log.e("PlayerActivity", "Highlight video API call failed", t);
-                showError("Error: " + t.getMessage());
+                showErrorDialog("Error: " + t.getMessage());
             }
         });
     }
