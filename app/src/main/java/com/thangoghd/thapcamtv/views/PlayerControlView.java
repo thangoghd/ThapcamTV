@@ -457,6 +457,10 @@ public class PlayerControlView extends FrameLayout {
             dialog.dismiss();
         });
 
+        listView.post(() -> {
+            listView.setSelection(currentQualityIndex);
+            listView.requestFocus();
+        });
         dialog.show();
     }
 
