@@ -18,9 +18,6 @@ import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.google.gson.Gson;
-import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.thangoghd.thapcamtv.PlayerActivity;
 import com.thangoghd.thapcamtv.R;
@@ -39,9 +36,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
-
-import retrofit2.Call;
-import retrofit2.Response;
 
 public class LiveFragment extends Fragment {
     private RecyclerView recyclerViewSports;
@@ -272,9 +266,28 @@ public class LiveFragment extends Fragment {
     private void updateMatchesRecyclerView() {
         if (matchesAdapter == null) {
             // Initialize matchesAdapter and pass listener to handle onClick event
-            matchesAdapter = new MatchesAdapter(matches, this, matchId -> {
-                // Call the fetchMatchStreamUrl function when the user clicks on a match
-                fetchMatchStreamUrl(matchId);
+            matchesAdapter = new MatchesAdapter(matches, this, match -> {
+                PlayerActivity.fetchMatchStreamUrl(match, new RepositoryCallback<JsonObject>() {
+                    @Override
+                    public void onSuccess(JsonObject result) {
+                        // Handle success - có thể start PlayerActivity với data
+                        Intent intent = new Intent(getContext(), PlayerActivity.class);
+                        intent.putExtra("source_type", "live");
+                        intent.putExtra("is_loading", true);
+                        intent.putExtra("match_id", match.getId());
+                        intent.putExtra("sport_type", match.getSportType());
+                        intent.putExtra("sync_key", match.getSync() != null ? match.getSync() : match.getId());
+                        intent.putExtra("from", match.getFrom());
+                        intent.putExtra("show_quality_spinner", true);
+                        startActivity(intent);
+                    }
+
+                    @Override
+                    public void onError(Exception e) {
+                        // Handle error - hiển thị thông báo lỗi
+                        Toast.makeText(getContext(), "Có lỗi xảy ra khi tải dữ liệu", Toast.LENGTH_SHORT).show();
+                    }
+                });
             });
             // Set LayoutManager for recyclerViewMatches
             recyclerViewMatches.setLayoutManager(new GridLayoutManager(getContext(), 3));
@@ -468,130 +481,6 @@ public class LiveFragment extends Fragment {
                 }
             });
         }
-    }
-
-    private void fetchMatchStreamUrl(String matchId) {
-        Match selectedMatch = null;
-        for (Match match : allMatches) {
-            if (match.getId().equals(matchId)) {
-                selectedMatch = match;
-                break;
-            }
-        }
-
-        // Start PlayerActivity immediately with loading state
-        Intent intent = new Intent(getContext(), PlayerActivity.class);
-        intent.putExtra("source_type", "live");
-        intent.putExtra("is_loading", true);
-        intent.putExtra("match_id", matchId);
-        intent.putExtra("sport_type", selectedMatch.getSportType());
-        intent.putExtra("sync_key", selectedMatch.getSync() != null ? selectedMatch.getSync() : matchId);
-        intent.putExtra("from", selectedMatch.getFrom());
-        intent.putExtra("show_quality_spinner", true);
-        startActivity(intent);
-
-        SportApi api;
-        Call<JsonObject> call;
-
-        if ("vebo".equals(selectedMatch.getFrom())) {
-            api = ApiManager.getSportApi(true); // vebo.xyz
-            call = api.getVeboStreamUrl(matchId);
-        } else {
-            // Default to thapcam.xyz API
-            api = ApiManager.getSportApi(false); // thapcam.xyz
-            call = api.getThapcamStreamUrl(matchId);
-        }
-
-
-        call.enqueue(new retrofit2.Callback<JsonObject>() {
-            @Override
-            public void onResponse(@NonNull Call<JsonObject> call, @NonNull Response<JsonObject> response) {
-                if (!isAdded()) return;
-
-                if (response.isSuccessful() && response.body() != null) {
-                    String jsonResponse = response.body().toString();
-                    try{
-                        parseJsonAndStartPlayer(jsonResponse, true);
-                    } catch (Exception e) {
-                        Toast.makeText(getContext(), "Có lỗi xảy ra khi tải luồng.", Toast.LENGTH_SHORT).show();
-                    }
-                }
-            }
-            @Override
-            public void onFailure(@NonNull Call<JsonObject> call, @NonNull Throwable t) {
-
-            }
-        });
-    }
-
-    private void parseJsonAndStartPlayer(String jsonResponse, boolean isBackgroundLoad) {
-        try {
-            Gson gson = new Gson();
-            JsonObject jsonObject = gson.fromJson(jsonResponse, JsonObject.class);
-            JsonObject data = jsonObject.getAsJsonObject("data");
-
-            // Check if data is null or play_urls is null/empty
-            if (data == null || data.get("play_urls") == null || data.get("play_urls").isJsonNull()) {
-                if (!isBackgroundLoad) {
-                    requireActivity().runOnUiThread(() -> Toast.makeText(getContext(), "Trận đấu chưa được phát sóng.", Toast.LENGTH_SHORT).show());
-                }
-                return;
-            }
-
-            JsonArray playUrls = data.getAsJsonArray("play_urls");
-            if (playUrls == null || playUrls.size() == 0) {
-                if (!isBackgroundLoad) {
-                    requireActivity().runOnUiThread(() -> Toast.makeText(getContext(), "Trận đấu chưa được phát sóng.", Toast.LENGTH_SHORT).show());
-                }
-                return;
-            }
-
-            HashMap<String, String> qualityMap = new HashMap<>();
-            for (JsonElement element : playUrls) {
-                if (!element.isJsonObject()) continue;
-                
-                JsonObject urlObject = element.getAsJsonObject();
-                if (!urlObject.has("name") || !urlObject.has("url")) continue;
-
-                String name = urlObject.get("name").getAsString();
-                String url = urlObject.get("url").getAsString();
-                qualityMap.put(name, url);
-            }
-
-            if (!qualityMap.isEmpty()) {
-                if (isBackgroundLoad) {
-                    sendStreamUrlToPlayer(qualityMap);
-                } else {
-                    startVideoPlayer(qualityMap);
-                }
-            } else {
-                if (!isBackgroundLoad) {
-                    requireActivity().runOnUiThread(() -> Toast.makeText(getContext(), "Trận đấu chưa được phát sóng.", Toast.LENGTH_SHORT).show());
-                }
-            }
-        } catch (Exception e) {
-            Log.e("LiveFragment", "Error parsing JSON response", e);
-            if (!isBackgroundLoad) {
-                requireActivity().runOnUiThread(() -> Toast.makeText(getContext(), "Có lỗi xảy ra khi tải dữ liệu.", Toast.LENGTH_SHORT).show());
-            }
-        }
-    }
-
-    private void sendStreamUrlToPlayer(HashMap<String, String> qualityMap) {
-        PlayerActivity playerActivity = PlayerActivity.getInstance();
-        if (playerActivity != null) {
-            playerActivity.onStreamUrlReceived(qualityMap);
-        }
-    }
-
-    private void startVideoPlayer(HashMap<String, String> qualityMap) {
-        requireActivity().runOnUiThread(() -> {
-            Intent intent = new Intent(getContext(), PlayerActivity.class);
-            intent.putExtra("stream_url", qualityMap);
-            intent.putExtra("source_type", "live");
-            intent.putExtra("show_quality_spinner", true);
-            startActivity(intent);
-        });
     }
 
     private void changeBackground(SportType sportType) {

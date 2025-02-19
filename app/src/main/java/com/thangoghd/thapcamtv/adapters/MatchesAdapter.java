@@ -30,7 +30,7 @@ public class MatchesAdapter extends RecyclerView.Adapter<MatchesAdapter.MatchVie
     private final LiveFragment fragment;
 
     public interface OnMatchClickListener {
-        void onMatchClick(String matchId);
+        void onMatchClick(Match match);
     }
 
     public MatchesAdapter(List<Match> matches, LiveFragment fragment, OnMatchClickListener listener) {
@@ -66,7 +66,7 @@ public class MatchesAdapter extends RecyclerView.Adapter<MatchesAdapter.MatchVie
 
         // Handle onClick event for items in RecyclerView
         holder.itemView.setOnClickListener(v -> {
-            matchClickListener.onMatchClick(match.getId());
+            matchClickListener.onMatchClick(match);
         });
     }
 

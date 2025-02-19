@@ -7,17 +7,23 @@ import com.thangoghd.thapcamtv.response.MatchResponse;
 import com.thangoghd.thapcamtv.response.ReplayResponse;
 
 import java.util.List;
+import java.util.Map;
 
 import retrofit2.Call;
 import retrofit2.http.GET;
+import retrofit2.http.HeaderMap;
 import retrofit2.http.Path;
 
 public interface SportApi {
     @GET("api/match/featured")
     Call<MatchResponse> getLiveMatches();
 
-    @GET("api/match/{matchId}/meta")
-    Call<JsonObject> getThapcamStreamUrl(@Path("matchId") String matchId);
+    @GET("api/match/tc/{matchId}/{p}/meta/{token}")
+    Call<JsonObject> getThapcamStreamUrl(
+        @Path("matchId") String matchId,
+        @Path("p") String p,
+        @Path("token") String token
+    );
 
     @GET("api/match/{matchId}/meta")
     Call<JsonObject> getVeboStreamUrl(@Path("matchId") String matchId);

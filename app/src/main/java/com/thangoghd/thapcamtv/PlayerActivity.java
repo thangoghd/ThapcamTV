@@ -36,12 +36,14 @@ import com.google.gson.JsonObject;
 import com.thangoghd.thapcamtv.api.ApiManager;
 import com.thangoghd.thapcamtv.api.RetrofitClient;
 import com.thangoghd.thapcamtv.api.SportApi;
+import com.thangoghd.thapcamtv.api.StreamUrlFetcher;
 import com.thangoghd.thapcamtv.models.Match;
 import com.thangoghd.thapcamtv.repositories.RepositoryCallback;
 import com.thangoghd.thapcamtv.repositories.SportRepository;
 import com.thangoghd.thapcamtv.response.ReplayLinkResponse;
 import com.thangoghd.thapcamtv.views.PlayerControlView;
 
+import java.io.IOException;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -54,13 +56,13 @@ import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 
+import android.view.LayoutInflater;
+import android.view.Gravity;
+
 import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
-
-import android.view.LayoutInflater;
-import android.view.Gravity;
 
 public class PlayerActivity extends AppCompatActivity {
 
@@ -132,7 +134,6 @@ public class PlayerActivity extends AppCompatActivity {
         String videoUrl = getIntent().getStringExtra("replay_url");
         String sourceType = getIntent().getStringExtra("source_type");
         String matchId = getIntent().getStringExtra("match_id");
-        String sportType = getIntent().getStringExtra("sport_type");
         String matchFrom = getIntent().getStringExtra("from");
         syncKey = getIntent().getStringExtra("sync_key");
         boolean isLoading = getIntent().getBooleanExtra("is_loading", false);
@@ -152,13 +153,26 @@ public class PlayerActivity extends AppCompatActivity {
         }
 
         Log.d("PlayerActivity", "onCreate - sourceType: " + sourceType + 
-              ", matchId: " + matchId + ", sportType: " + sportType + 
+              ", matchId: " + matchId +
               ", isLoading: " + isLoading + ", from: " + matchFrom +
               ", syncKey: " + syncKey);
 
         if (isLoading && matchId != null) {
             showLoading(true);
-            fetchMatchStreamUrl(matchId, matchFrom);
+            Match match = new Match();
+            match.setId(matchId);
+            match.setFrom(matchFrom);
+            fetchMatchStreamUrl(match, new RepositoryCallback<JsonObject>() {
+                @Override
+                public void onSuccess(JsonObject result) {
+                    parseJsonAndStartPlayer(result.toString());
+                }
+
+                @Override
+                public void onError(Exception e) {
+                    showErrorDialog("Có lỗi xảy ra khi tải dữ liệu");
+                }
+            });
         } else {
             handleVideoSource(sourceType, videoUrl);
         }
@@ -189,7 +203,17 @@ public class PlayerActivity extends AppCompatActivity {
                     if (syncKey != null) {
                         updateSyncKey(syncKey);
                     }
-                    fetchMatchStreamUrl(matchId, from);
+                    fetchMatchStreamUrl(match, new RepositoryCallback<JsonObject>() {
+                        @Override
+                        public void onSuccess(JsonObject result) {
+                            parseJsonAndStartPlayer(result.toString());
+                        }
+
+                        @Override
+                        public void onError(Exception e) {
+                            showErrorDialog("Có lỗi xảy ra khi tải dữ liệu");
+                        }
+                    });
                 }
             }
 
@@ -441,45 +465,85 @@ public class PlayerActivity extends AppCompatActivity {
         }
     }
 
-    private void fetchMatchStreamUrl(String matchId, String from) {
-        Log.d("PlayerActivity", "Fetching stream URL for matchId: " + matchId + ", from: " + from);
-
-        SportApi api;
-        Call<JsonObject> call;
-
-        if ("vebo".equals(from)) {
-            api = ApiManager.getSportApi(true); // vebo.xyz
-            call = api.getVeboStreamUrl(matchId);
+    private static void handleStreamApiResponse(Response<JsonObject> response, RepositoryCallback<JsonObject> callback) {
+        if (response.isSuccessful() && response.body() != null) {
+            callback.onSuccess(response.body());
         } else {
-            // Default to thapcam.xyz API
-            api = ApiManager.getSportApi(false); // thapcam.xyz
-            call = api.getThapcamStreamUrl(matchId);
-        }
-
-        call.enqueue(new Callback<JsonObject>() {
-            @Override
-            public void onResponse(@NonNull Call<JsonObject> call, @NonNull Response<JsonObject> response) {
-                Log.d("PlayerActivity", "Stream URL API response received");
-                if (response.isSuccessful() && response.body() != null) {
-                    String jsonResponse = response.body().toString();
-                    try {
-                        parseJsonAndStartPlayer(jsonResponse);
-                    } catch (Exception e) {
-                        Log.e("PlayerActivity", "Error parsing stream URL response", e);
-                        showErrorDialog("Có lỗi xảy ra khi tải dữ liệu");
-                    }
-                } else {
-                    Log.e("PlayerActivity", "Stream URL API error: " + response.code());
-                    showErrorDialog("Không thể tải dữ liệu trận đấu.");
+            String errorMsg = "Failed to fetch stream URL. Code: " + response.code();
+            if (response.errorBody() != null) {
+                try {
+                    errorMsg += ". Error: " + response.errorBody().string();
+                } catch (IOException e) {
+                    Log.e("PlayerActivity", "Error reading error body", e);
                 }
             }
+            callback.onError(new Exception(errorMsg));
+        }
+    }
 
-            @Override
-            public void onFailure(@NonNull Call<JsonObject> call, @NonNull Throwable t) {
-                Log.e("PlayerActivity", "Stream URL API call failed", t);
-                showErrorDialog("Không thể kết nối đến máy chủ.");
+    private static void handleStreamApiFailure(Throwable t, RepositoryCallback<JsonObject> callback) {
+        Log.e("PlayerActivity", "API call failed", t);
+        callback.onError(t instanceof Exception ? (Exception) t : new Exception(t));
+    }
+
+    public static void fetchMatchStreamUrl(Match match, RepositoryCallback<JsonObject> callback) {
+        if (match == null) {
+            callback.onError(new IllegalArgumentException("Match cannot be null"));
+            return;
+        }
+
+        if ("vebo".equals(match.getFrom())) {
+            // For vebo.xyz
+            try {
+                SportApi api = ApiManager.getSportApi(true);
+                api.getVeboStreamUrl(match.getId())
+                   .enqueue(new Callback<JsonObject>() {
+                        @Override
+                        public void onResponse(Call<JsonObject> call, Response<JsonObject> response) {
+                            handleStreamApiResponse(response, callback);
+                        }
+                        
+                        @Override
+                        public void onFailure(Call<JsonObject> call, Throwable t) {
+                            handleStreamApiFailure(t, callback);
+                        }
+                    });
+            } catch (Exception e) {
+                Log.e("PlayerActivity", "Error creating Vebo API call", e);
+                callback.onError(e);
             }
-        });
+        } else {
+            // For thapcam.xyz
+            StreamUrlFetcher.fetchStreamMetadata(match, new StreamUrlFetcher.Callback<StreamUrlFetcher.StreamMetadata>() {
+                @Override
+                public void onSuccess(StreamUrlFetcher.StreamMetadata metadata) {
+                    try {
+                        SportApi api = ApiManager.getSportApi(false);
+                        api.getThapcamStreamUrl(metadata.encryptedId, "no", metadata.token)
+                           .enqueue(new Callback<JsonObject>() {
+                                @Override
+                                public void onResponse(Call<JsonObject> call, Response<JsonObject> response) {
+                                    handleStreamApiResponse(response, callback);
+                                }
+                                
+                                @Override
+                                public void onFailure(Call<JsonObject> call, Throwable t) {
+                                    handleStreamApiFailure(t, callback);
+                                }
+                            });
+                    } catch (Exception e) {
+                        Log.e("PlayerActivity", "Error creating Thapcam API call", e);
+                        callback.onError(e);
+                    }
+                }
+                
+                @Override
+                public void onError(Exception e) {
+                    Log.e("PlayerActivity", "Error fetching stream metadata", e);
+                    callback.onError(e);
+                }
+            });
+        }
     }
 
     private void parseJsonAndStartPlayer(String jsonResponse) {
