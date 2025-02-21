@@ -107,7 +107,7 @@ public class LiveChannelHelper {
         long channelId = ContentUris.parseId(channelUri);
         Log.d("LiveChannelHelper", "Created new channel with ID: " + channelId);
 
-        Bitmap bitmap = BitmapFactory.decodeResource(context.getResources(), R.mipmap.ic_launcher);
+        Bitmap bitmap = BitmapFactory.decodeResource(context.getResources(), R.drawable.thapcam_channel_logo);
         ChannelLogoUtils.storeChannelLogo(context, channelId, bitmap);
 
         // Make channel browsable

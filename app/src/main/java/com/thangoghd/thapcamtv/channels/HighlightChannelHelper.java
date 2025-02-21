@@ -95,7 +95,7 @@ public class HighlightChannelHelper {
         
         long channelId = ContentUris.parseId(channelUri);
 
-        Bitmap bitmap = BitmapFactory.decodeResource(context.getResources(), R.mipmap.ic_launcher);
+        Bitmap bitmap = BitmapFactory.decodeResource(context.getResources(), R.drawable.thapcam_channel_logo);
         ChannelLogoUtils.storeChannelLogo(context, channelId, bitmap);
         
         // Make channel browsable

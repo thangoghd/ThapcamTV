@@ -6,6 +6,7 @@ import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.core.content.ContextCompat;
@@ -66,6 +67,8 @@ public class MatchesAdapter extends RecyclerView.Adapter<MatchesAdapter.MatchVie
 
         // Handle onClick event for items in RecyclerView
         holder.itemView.setOnClickListener(v -> {
+            String title = match.getAway() == null ? match.getHome().getName() : match.getHome().getName() + " vs " + match.getAway().getName();
+            Toast.makeText(v.getContext(), "Đang chuẩn bị trận đấu: " + title +". Vui lòng chờ.", Toast.LENGTH_SHORT).show();
             matchClickListener.onMatchClick(match);
         });
     }
