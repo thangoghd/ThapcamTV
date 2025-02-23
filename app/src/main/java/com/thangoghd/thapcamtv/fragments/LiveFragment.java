@@ -271,7 +271,7 @@ public class LiveFragment extends Fragment {
                 intent.putExtra("is_loading", true);
                 intent.putExtra("match_id", match.getId());
                 intent.putExtra("match_slug", match.getSlug());
-                intent.putExtra("sync_key", match.getSync() != null ? match.getSync() : match.getId());
+                intent.putExtra("sync_key", match.getSync() != null ? match.getSync() : match.getRoomId());
                 intent.putExtra("from", match.getFrom());
                 intent.putExtra("show_quality_spinner", true);
                 startActivity(intent);

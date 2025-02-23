@@ -194,7 +194,7 @@ public class LiveChannelHelper {
         intent.putExtra("show_quality_spinner", true); 
         intent.putExtra("match_id", match.getId());
         intent.putExtra("match_slug", match.getSlug());
-        intent.putExtra("sync_key", match.getSync() != null ? match.getSync() : match.getId());
+        intent.putExtra("sync_key", match.getSync() != null ? match.getSync() : match.getRoomId());
         intent.putExtra("from", match.getFrom());
         
         // Convert intent to URI string with all flags preserved
