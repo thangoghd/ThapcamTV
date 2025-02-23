@@ -17,6 +17,7 @@ public class Match {
     private String match_status;
     private List<Commentator> commentators;
     private boolean is_live;
+    private String room_id;
     private String time_str;
     private String from;
 
@@ -126,6 +127,8 @@ public class Match {
     }
 
     public boolean getLive(){return is_live;}
+
+    public String getRoomId(){return room_id;}
 
     public String getTimeInMatch(){return time_str;}
 

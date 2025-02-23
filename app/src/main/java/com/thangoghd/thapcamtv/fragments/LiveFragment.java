@@ -265,36 +265,21 @@ public class LiveFragment extends Fragment {
 
     private void updateMatchesRecyclerView() {
         if (matchesAdapter == null) {
-            // Initialize matchesAdapter and pass listener to handle onClick event
             matchesAdapter = new MatchesAdapter(matches, this, match -> {
-                PlayerActivity.fetchMatchStreamUrl(match, new RepositoryCallback<JsonObject>() {
-                    @Override
-                    public void onSuccess(JsonObject result) {
-                        // Handle success - có thể start PlayerActivity với data
-                        Intent intent = new Intent(getContext(), PlayerActivity.class);
-                        intent.putExtra("source_type", "live");
-                        intent.putExtra("is_loading", true);
-                        intent.putExtra("match_id", match.getId());
-                        intent.putExtra("sport_type", match.getSportType());
-                        intent.putExtra("sync_key", match.getSync() != null ? match.getSync() : match.getId());
-                        intent.putExtra("from", match.getFrom());
-                        intent.putExtra("show_quality_spinner", true);
-                        startActivity(intent);
-                    }
-
-                    @Override
-                    public void onError(Exception e) {
-                        // Handle error - hiển thị thông báo lỗi
-                        Toast.makeText(getContext(), "Có lỗi xảy ra khi tải dữ liệu", Toast.LENGTH_SHORT).show();
-                    }
-                });
+                Intent intent = new Intent(getContext(), PlayerActivity.class);
+                intent.putExtra("source_type", "live");
+                intent.putExtra("is_loading", true);
+                intent.putExtra("match_id", match.getId());
+                intent.putExtra("match_slug", match.getSlug());
+                intent.putExtra("sync_key", match.getSync() != null ? match.getSync() : match.getId());
+                intent.putExtra("from", match.getFrom());
+                intent.putExtra("show_quality_spinner", true);
+                startActivity(intent);
             });
-            // Set LayoutManager for recyclerViewMatches
             recyclerViewMatches.setLayoutManager(new GridLayoutManager(getContext(), 3));
             recyclerViewMatches.addItemDecoration(new SpaceItemDecoration(0, 0, 0, 35));
             recyclerViewMatches.setAdapter(matchesAdapter);
         } else {
-            // Update the adapter with new matches
             matchesAdapter.updateMatches(matches);
         }
 

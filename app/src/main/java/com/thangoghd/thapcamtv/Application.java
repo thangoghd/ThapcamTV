@@ -1,5 +1,6 @@
 package com.thangoghd.thapcamtv;
 
+import android.content.Context;
 import android.util.Log;
 
 import com.thangoghd.thapcamtv.channels.HighlightChannelHelper;
@@ -7,9 +8,11 @@ import com.thangoghd.thapcamtv.channels.LiveChannelHelper;
 
 public class Application extends android.app.Application {
     private static final String TAG = "ThapcamTV";
+    private static Context context;
     @Override
     public void onCreate() {
         super.onCreate();
+        context = getApplicationContext();
 
         Log.d(TAG, "Application onCreate started");
 
@@ -40,5 +43,9 @@ public class Application extends android.app.Application {
         }
 
         Log.d(TAG, "Application onCreate completed");
+    }
+
+    public static Context getContext() {
+        return context;
     }
 }

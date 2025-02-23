@@ -3,10 +3,8 @@ package com.thangoghd.thapcamtv;
 import android.animation.ValueAnimator;
 import android.content.Context;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.KeyEvent;
 import android.view.View;
-import android.view.Window;
 import android.view.WindowManager;
 import android.view.animation.DecelerateInterpolator;
 import android.widget.LinearLayout;
@@ -14,13 +12,14 @@ import android.widget.Toast;
 
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentActivity;
-import androidx.fragment.app.FragmentTransaction;
 import androidx.leanback.widget.BrowseFrameLayout;
 
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 
+import com.thangoghd.thapcamtv.api.MirrorDetectionTask;
+import com.thangoghd.thapcamtv.cache.MirrorUrlManager;
 import com.thangoghd.thapcamtv.api.RetrofitClient;
 import com.thangoghd.thapcamtv.fragments.FullMatchFragment;
 import com.thangoghd.thapcamtv.fragments.HighlightFragment;
@@ -45,9 +44,8 @@ public class MainActivity extends FragmentActivity implements View.OnKeyListener
     private LinearLayout lastSelectedMenu;
 
     private boolean SIDE_MENU = false;
+    public String mirrorLink;
     private UpdateManager updateManager;
-
-    private static final String TAG = "MainActivity";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -55,6 +53,19 @@ public class MainActivity extends FragmentActivity implements View.OnKeyListener
         
         // Initialize Firebase and Remote Config
         RetrofitClient.initRemoteConfig();
+
+        setContentView(R.layout.activity_main);
+
+        // Initialize MirrorUrlManager
+        MirrorUrlManager mirrorManager = MirrorUrlManager.getInstance(this);
+        String cachedMirror = mirrorManager.getMirrorUrl();
+        
+        if (cachedMirror != null) {
+            mirrorLink = cachedMirror;
+        } else {
+            // Start the network task
+            new MirrorDetectionTask(mirrorManager).execute("https://thapcam.tv");
+        }
         
         // Add fullscreen flags
         getWindow().setFlags(
@@ -73,8 +84,6 @@ public class MainActivity extends FragmentActivity implements View.OnKeyListener
             | View.SYSTEM_UI_FLAG_FULLSCREEN
         );
         
-        setContentView(R.layout.activity_main);
-
         navBar = findViewById(R.id.blfNavBar);
         
         // Initialize menu items

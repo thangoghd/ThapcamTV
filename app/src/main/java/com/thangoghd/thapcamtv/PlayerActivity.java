@@ -15,7 +15,6 @@ import android.widget.FrameLayout;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -66,7 +65,6 @@ import javax.net.ssl.X509TrustManager;
 
 public class PlayerActivity extends AppCompatActivity {
 
-    private static PlayerActivity instance;
     private ExoPlayer player;
     private PlayerView playerView;
     private PlayerControlView playerControlView;
@@ -86,21 +84,9 @@ public class PlayerActivity extends AppCompatActivity {
         }
     };
 
-    private final Runnable hideRunnable = new Runnable() {
-        @Override
-        public void run() {
-            playerControlView.hide();
-        }
-    };
-
-    public static PlayerActivity getInstance() {
-        return instance;
-    }
-
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        instance = this;
         setContentView(R.layout.activity_player);
 
         // Add fullscreen flags
@@ -134,6 +120,7 @@ public class PlayerActivity extends AppCompatActivity {
         String videoUrl = getIntent().getStringExtra("replay_url");
         String sourceType = getIntent().getStringExtra("source_type");
         String matchId = getIntent().getStringExtra("match_id");
+        String matchSlug = getIntent().getStringExtra("match_slug");
         String matchFrom = getIntent().getStringExtra("from");
         syncKey = getIntent().getStringExtra("sync_key");
         boolean isLoading = getIntent().getBooleanExtra("is_loading", false);
@@ -161,11 +148,16 @@ public class PlayerActivity extends AppCompatActivity {
             showLoading(true);
             Match match = new Match();
             match.setId(matchId);
+            match.setSlug(matchSlug);
             match.setFrom(matchFrom);
             fetchMatchStreamUrl(match, new RepositoryCallback<JsonObject>() {
                 @Override
                 public void onSuccess(JsonObject result) {
-                    parseJsonAndStartPlayer(result.toString());
+                    if("vebo".equals(matchFrom)) {
+                        parseJsonAndStartPlayer(result.toString());
+                    } else {
+                        parseThapcamJsonAndStartPlayer(result.toString());
+                    }
                 }
 
                 @Override
@@ -198,7 +190,6 @@ public class PlayerActivity extends AppCompatActivity {
             @Override
             public void onMatchSelected(Match match, String from, String syncKey) {
                 if (match != null) {
-                    String matchId = match.getId();
                     // Update syncKey
                     if (syncKey != null) {
                         updateSyncKey(syncKey);
@@ -206,7 +197,11 @@ public class PlayerActivity extends AppCompatActivity {
                     fetchMatchStreamUrl(match, new RepositoryCallback<JsonObject>() {
                         @Override
                         public void onSuccess(JsonObject result) {
-                            parseJsonAndStartPlayer(result.toString());
+                            if("vebo".equals(from)) {
+                                parseJsonAndStartPlayer(result.toString());
+                            } else {
+                                parseThapcamJsonAndStartPlayer(result.toString());
+                            }
                         }
 
                         @Override
@@ -590,6 +585,63 @@ public class PlayerActivity extends AppCompatActivity {
             showErrorDialog("Có lỗi xảy ra khi tải dữ liệu.");
         }
     }
+    private void parseThapcamJsonAndStartPlayer(String jsonResponse) {
+        try {
+            Gson gson = new Gson();
+            JsonObject jsonObject = gson.fromJson(jsonResponse, JsonObject.class);
+            JsonObject data = jsonObject.getAsJsonObject("data");
+
+            // Check if there is no valid data
+            if (data == null || !data.has("fansites") || data.get("fansites").isJsonNull()) {
+                Log.w("PlayerActivity", "No stream data found in response");
+                showErrorDialog("Trận đấu chưa được phát sóng.");
+                return;
+            }
+
+            JsonArray fansites = data.getAsJsonArray("fansites");
+            if (fansites == null || fansites.isEmpty()) {
+                Log.w("PlayerActivity", "Empty fansites array");
+                showErrorDialog("Trận đấu chưa được phát sóng.");
+                return;
+            }
+
+            HashMap<String, String> qualityMap = new HashMap<>();
+
+            // Loop through the "fansites" array to find "stream_links"
+            for (JsonElement fansiteElement : fansites) {
+                if (!fansiteElement.isJsonObject()) continue;
+
+                JsonObject fansiteObject = fansiteElement.getAsJsonObject();
+                if (!fansiteObject.has("stream_links") || fansiteObject.get("stream_links").isJsonNull()) continue;
+
+                JsonArray streamLinks = fansiteObject.getAsJsonArray("stream_links");
+                if (streamLinks == null || streamLinks.isEmpty()) continue;
+
+                for (JsonElement streamElement : streamLinks) {
+                    if (!streamElement.isJsonObject()) continue;
+
+                    JsonObject streamObject = streamElement.getAsJsonObject();
+                    if (!streamObject.has("name") || !streamObject.has("url")) continue;
+
+                    String name = streamObject.get("name").getAsString();
+                    String url = streamObject.get("url").getAsString();
+                    qualityMap.put(name, url);
+                    Log.d("PlayerActivity", "Found quality option: " + name);
+                }
+            }
+
+            if (!qualityMap.isEmpty()) {
+                onStreamUrlReceived(qualityMap);
+            } else {
+                Log.w("PlayerActivity", "No valid stream URLs found");
+                showErrorDialog("Trận đấu chưa được phát sóng.");
+            }
+        } catch (Exception e) {
+            Log.e("PlayerActivity", "Error parsing JSON response", e);
+            showErrorDialog("Có lỗi xảy ra khi tải dữ liệu.");
+        }
+    }
+
 
     private void fetchHighlightVideoFromChannel(String id) {
         Log.d("PlayerActivity", "Fetching highlight video for id: " + id);
